@@ -60,6 +60,7 @@
 /libhyperleveldb.pc
 /libtool
 /ltmain.sh
+/m4/
 /Makefile
 /Makefile.in
 /Makefile.old
