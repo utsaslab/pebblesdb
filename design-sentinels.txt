@@ -1,0 +1,24 @@
+Sentinels
+=========
+We want sentinels away from the guards as much as possible.
+It could just be a feature of each level in a version.
+
+Inserting into sentinels:
+insert if there are no guards
+insert if largest < first guard.
+
+Search sentinels:
+If the interval overlaps the left of the first guard, check in
+sentinel guard.
+
+As usual, when a new guard is inserted, it takes some of the files
+from the guard to the left. This might be sentinel also.
+
+Sentinels participate in compaction just like regular guards.
+
+Saving and restoring guards:
+When a file is added into the manifest, adding an extra line for
+indicating it belongs to a sentinel shouldn't cost much anyway.
+
+Read the manifest and restore, just like VersionEdits from
+LogAndApply. 
