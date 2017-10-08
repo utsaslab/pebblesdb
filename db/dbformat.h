@@ -20,9 +20,6 @@ namespace leveldb {
 // parameters set via options.
 namespace config {
 static const unsigned kNumLevels = 7;
-
-// Max number of files per guard.
-static const unsigned kMaxNumSegments = 10000;
  
 // Level-0 compaction is started when we hit this many files.
 static const unsigned kL0_CompactionTrigger = 4;
