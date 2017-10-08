@@ -5,6 +5,7 @@ PebblesDB is built by modifying HyperLevelDB (https://github.com/rescrv/HyperLev
 
 If you are using LevelDB in your deployment, do consider trying out PebblesDB! PebblesDB can also be used to replace RocksDB as long as the RocksDB-specific functionality like column families are not used. 
 
+Please cite the following paper if you use PebblesDB: [PebblesDB: Building Key-Value Stores using Fragmented Log-Structured Merge Trees](http://www.cs.utexas.edu/~vijay/papers/sosp17-pebblesdb.pdf). Pandian Raju, Rohan Kadekodi, Vijay Chidambaram, Ittai Abraham. [SOSP 17](https://www.sigops.org/sosp/sosp17/). [Bibtex](http://www.cs.utexas.edu/~vijay/bibtex/sosp17-pebblesdb.bib)
 ___
 
 ### Installation
@@ -39,8 +40,14 @@ PebblesDB uses FLSM data structure to logically arrange the sstables on disk. FL
 Sstable level bloom filter can't be used to reduce the disk read for `seek` operation since `seek` has to examine all files within a guard even if a file doesn't contain the key. To tackle this challenge, PebblesDB does two optimizations:
 1. **Parallel seeks:** PebblesDB employs multiple threads to do `seek()` operation on multiple files within a guard. Note that this optimization might only be helpful when the size of the data set is much larger than the RAM size because otherwise the overhead of thread synchronization conceals the benefits obtained by using multiple threads.  
 By default, this optimization is disabled. This can be enabled by uncommenting `#define SEEK_PARALLEL` in `db/version_set.h`.  
-2. **Forced compaction:** When the workload is seek-heavy, PebblesDB can be configured to do a seek based forced compaction which aims at reducing the number of levels of number of files within a guard. This can lead to an increase in Write IO compared to PebblesDB without this optimization, but this is a trade-off between write IO and seek throughput.  
-By default, this optimization is enabled. This can be disabled by uncommenting `#define DISABLE_SEEK_BASED_COMPACTION` in `db/version_set.h`.  
+
+2. **Forced compaction:** When the workload is seek-heavy, PebblesDB
+can be configured to do a seek-based forced compaction which aims at
+reducing the number of files within a guard. This can lead to an
+increase in write IO, but this is a trade-off between write IO and
+seek throughput.  By default, this optimization is enabled. This can
+be disabled by uncommenting `#define DISABLE_SEEK_BASED_COMPACTION` in
+`db/version_set.h`.
 
 ___
 
