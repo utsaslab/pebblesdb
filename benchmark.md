@@ -51,11 +51,19 @@ workload and comparable throuhgput in a pure read workload. For mixed workload, 
 the pressure on Level 0 comes down earlier for PebblesDB and hence the overall throughput for read+write is higher for PebblesDB.
 
 #### Other scenarios
-* Figures 1 (d) to 1 (g) shows the benchmark results on different scenarios like a small cached datatset, limited memory etc. 
+* Figures 1 (d) to 1 (g) shows the benchmark results on different scenarios like a small cached datatset, small key-value pairs,  aged file-system and limited memory.
 * For small cached dataset, PebblesDB-1 is the key-value stored configured with maximum of 1 file per guard. We see that setting
 this to 1 helps in achieving comparable performance with other key-value stores.
 * For the other scenarios like limited memory, aged file-system etc, the same pattern follows: PebblesDB typically achieves higher 
 write throughput and comparable read throughput but has lesser range query performance. 
 
+### YCSB Benchmark
+[YCSB](https://github.com/brianfrankcooper/YCSB) is an industry-standard, widely used open source benchmark for NoSQL stores. We evaluate the different key-values stores using the YCSB benchmark suite. We inserted 50M key-value pairs with value size 1 KB totaling to around 52 GB of user data. Around 10M reads were performed for the other workloads.  
 
+![YCSB-benchmark](https://github.com/utsaslab/pebblesdb/blob/master/graphs/multi-ycsb.png)
 
+Figure 2 - YCSB Benchmark
+
+* Figure 2 shows the performance results of YCSB benchmark on different key-value stores. We see that on write workloads like Load-A and Load-E, PebblesDB clearly has much higher throughput compared to the other key-value stores. Same is the case for Run-A which is a mixed read-write workload. 
+* For other read dominated workloads, PebblesDB has comaparable throughput to HyperLevelDB. For Run-C, PebblesDB artificially has higher throughput and the reason turned out to be lesser number of files in PebblesDB and hence lesser number of table_cache misses. Increasing the table cache and re-running Run-C showed that the throughputs became comparable. 
+* Surprisingly for Run-E, which is the range query workload, PebblesDB incurs only a small overhead. This is due to continuous (5%) writes happening in the workload which doesn't allow any key-value store to reach a fully compacted state as well as due to different number of next() operations (uniformly distributed between 1 to 100) after a seek, which amortizes the total disk amount of disk read.
