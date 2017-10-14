@@ -4,15 +4,15 @@
 
 #define __STDC_LIMIT_MACROS
 
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/filter_policy.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/filter_policy.h"
 #include "db/db_impl.h"
 #include "db/filename.h"
 #include "db/version_set.h"
 #include "db/write_batch_internal.h"
-#include "hyperleveldb/cache.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/table.h"
+#include "pebblesdb/cache.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/table.h"
 #include "util/hash.h"
 #include "util/logging.h"
 #include "util/mutexlock.h"

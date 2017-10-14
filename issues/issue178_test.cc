@@ -7,8 +7,8 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/write_batch.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/write_batch.h"
 #include "util/testharness.h"
 
 namespace {

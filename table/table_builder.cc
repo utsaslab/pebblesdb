@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include "hyperleveldb/table_builder.h"
+#include "pebblesdb/table_builder.h"
 
 #include <assert.h>
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/filter_policy.h"
-#include "hyperleveldb/options.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/filter_policy.h"
+#include "pebblesdb/options.h"
 #include "table/block_builder.h"
 #include "table/filter_block.h"
 #include "table/format.h"

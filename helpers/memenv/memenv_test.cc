@@ -5,8 +5,8 @@
 #include "helpers/memenv/memenv.h"
 
 #include "db/db_impl.h"
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/env.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/env.h"
 #include "util/testharness.h"
 #include <string>
 #include <vector>

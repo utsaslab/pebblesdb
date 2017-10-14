@@ -4,7 +4,7 @@
 
 #include "table/filter_block.h"
 
-#include "hyperleveldb/filter_policy.h"
+#include "pebblesdb/filter_policy.h"
 #include "util/coding.h"
 #include "util/hash.h"
 #include "util/logging.h"

@@ -11,8 +11,8 @@
 #include <stdint.h>
 #include <unordered_map>
 #include "db/dbformat.h"
-#include "hyperleveldb/cache.h"
-#include "hyperleveldb/table.h"
+#include "pebblesdb/cache.h"
+#include "pebblesdb/table.h"
 #include "port/port.h"
 #include "util/timer.h"
 #include "db/version_set.h"

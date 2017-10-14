@@ -14,8 +14,8 @@
 #define STORAGE_LEVELDB_INCLUDE_TABLE_BUILDER_H_
 
 #include <stdint.h>
-#include "hyperleveldb/options.h"
-#include "hyperleveldb/status.h"
+#include "pebblesdb/options.h"
+#include "pebblesdb/status.h"
 
 namespace leveldb {
 

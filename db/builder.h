@@ -5,7 +5,7 @@
 #ifndef STORAGE_LEVELDB_DB_BUILDER_H_
 #define STORAGE_LEVELDB_DB_BUILDER_H_
 
-#include "hyperleveldb/status.h"
+#include "pebblesdb/status.h"
 #include "db/version_set.h"
 
 namespace leveldb {

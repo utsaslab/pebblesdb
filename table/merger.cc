@@ -6,8 +6,8 @@
 
 #include <algorithm>
 
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/iterator.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/iterator.h"
 #include "table/iterator_wrapper.h"
 #include "util/timer.h"
 

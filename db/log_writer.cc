@@ -5,7 +5,7 @@
 #include "db/log_writer.h"
 
 #include <stdint.h>
-#include "hyperleveldb/env.h"
+#include "pebblesdb/env.h"
 #include "util/coding.h"
 #include "util/crc32c.h"
 #include "util/mutexlock.h"

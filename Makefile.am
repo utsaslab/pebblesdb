@@ -32,7 +32,7 @@ AM_CXXFLAGS = -DLEVELDB_PLATFORM_POSIX $(SNAPPY_FLAGS) ${EXTRA_CFLAGS} $(WANAL_C
 AM_MAKEFLAGS = --no-print-directory
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libhyperleveldb.pc
+pkgconfig_DATA = libpebblesdb.pc
 
 EXTRA_DIST =
 EXTRA_DIST += AUTHORS
@@ -51,20 +51,20 @@ EXTRA_DIST += README
 EXTRA_DIST += TODO
 
 pkginclude_HEADERS =
-pkginclude_HEADERS += include/hyperleveldb/cache.h
-pkginclude_HEADERS += include/hyperleveldb/c.h
-pkginclude_HEADERS += include/hyperleveldb/comparator.h
-pkginclude_HEADERS += include/hyperleveldb/db.h
-pkginclude_HEADERS += include/hyperleveldb/env.h
-pkginclude_HEADERS += include/hyperleveldb/filter_policy.h
-pkginclude_HEADERS += include/hyperleveldb/iterator.h
-pkginclude_HEADERS += include/hyperleveldb/options.h
-pkginclude_HEADERS += include/hyperleveldb/slice.h
-pkginclude_HEADERS += include/hyperleveldb/replay_iterator.h
-pkginclude_HEADERS += include/hyperleveldb/status.h
-pkginclude_HEADERS += include/hyperleveldb/table_builder.h
-pkginclude_HEADERS += include/hyperleveldb/table.h
-pkginclude_HEADERS += include/hyperleveldb/write_batch.h
+pkginclude_HEADERS += include/pebblesdb/cache.h
+pkginclude_HEADERS += include/pebblesdb/c.h
+pkginclude_HEADERS += include/pebblesdb/comparator.h
+pkginclude_HEADERS += include/pebblesdb/db.h
+pkginclude_HEADERS += include/pebblesdb/env.h
+pkginclude_HEADERS += include/pebblesdb/filter_policy.h
+pkginclude_HEADERS += include/pebblesdb/iterator.h
+pkginclude_HEADERS += include/pebblesdb/options.h
+pkginclude_HEADERS += include/pebblesdb/slice.h
+pkginclude_HEADERS += include/pebblesdb/replay_iterator.h
+pkginclude_HEADERS += include/pebblesdb/status.h
+pkginclude_HEADERS += include/pebblesdb/table_builder.h
+pkginclude_HEADERS += include/pebblesdb/table.h
+pkginclude_HEADERS += include/pebblesdb/write_batch.h
 noinst_HEADERS =
 noinst_HEADERS += db/builder.h
 noinst_HEADERS += db/dbformat.h
@@ -111,52 +111,52 @@ noinst_HEADERS += util/string_builder.h
 noinst_HEADERS += util/testharness.h
 noinst_HEADERS += util/testutil.h
 
-lib_LTLIBRARIES = libhyperleveldb.la
+lib_LTLIBRARIES = libpebblesdb.la
 
-libhyperleveldb_la_SOURCES =
-libhyperleveldb_la_SOURCES += db/builder.cc
-libhyperleveldb_la_SOURCES += db/c.cc
-libhyperleveldb_la_SOURCES += db/dbformat.cc
-libhyperleveldb_la_SOURCES += db/db_impl.cc
-libhyperleveldb_la_SOURCES += db/db_iter.cc
-libhyperleveldb_la_SOURCES += db/filename.cc
-libhyperleveldb_la_SOURCES += db/log_reader.cc
-libhyperleveldb_la_SOURCES += db/log_writer.cc
-libhyperleveldb_la_SOURCES += db/memtable.cc
-libhyperleveldb_la_SOURCES += db/murmurhash3.cc
-libhyperleveldb_la_SOURCES += db/repair.cc
-libhyperleveldb_la_SOURCES += db/replay_iterator.cc
-libhyperleveldb_la_SOURCES += db/table_cache.cc
-libhyperleveldb_la_SOURCES += db/version_edit.cc
-libhyperleveldb_la_SOURCES += db/version_set.cc
-libhyperleveldb_la_SOURCES += db/write_batch.cc
-libhyperleveldb_la_SOURCES += table/block_builder.cc
-libhyperleveldb_la_SOURCES += table/block.cc
-libhyperleveldb_la_SOURCES += table/filter_block.cc
-libhyperleveldb_la_SOURCES += table/format.cc
-libhyperleveldb_la_SOURCES += table/iterator.cc
-libhyperleveldb_la_SOURCES += table/merger.cc
-libhyperleveldb_la_SOURCES += table/table_builder.cc
-libhyperleveldb_la_SOURCES += table/table.cc
-libhyperleveldb_la_SOURCES += table/two_level_iterator.cc
-libhyperleveldb_la_SOURCES += util/arena.cc
-libhyperleveldb_la_SOURCES += util/atomic.cc
-libhyperleveldb_la_SOURCES += util/bloom.cc
-libhyperleveldb_la_SOURCES += util/cache.cc
-libhyperleveldb_la_SOURCES += util/coding.cc
-libhyperleveldb_la_SOURCES += util/comparator.cc
-libhyperleveldb_la_SOURCES += util/crc32c.cc
-libhyperleveldb_la_SOURCES += util/env.cc
-libhyperleveldb_la_SOURCES += util/env_posix.cc
-libhyperleveldb_la_SOURCES += util/filter_policy.cc
-libhyperleveldb_la_SOURCES += util/hash.cc
-libhyperleveldb_la_SOURCES += util/histogram.cc
-libhyperleveldb_la_SOURCES += util/logging.cc
-libhyperleveldb_la_SOURCES += util/options.cc
-libhyperleveldb_la_SOURCES += util/status.cc
-libhyperleveldb_la_SOURCES += port/port_posix.cc
-libhyperleveldb_la_LIBADD = $(SNAPPY_LIBS) -lpthread -lsnappy
-libhyperleveldb_la_LDFLAGS = -lpthread -lsnappy $(AM_LDFLAGS) $(LDFLAGS)
+libpebblesdb_la_SOURCES =
+libpebblesdb_la_SOURCES += db/builder.cc
+libpebblesdb_la_SOURCES += db/c.cc
+libpebblesdb_la_SOURCES += db/dbformat.cc
+libpebblesdb_la_SOURCES += db/db_impl.cc
+libpebblesdb_la_SOURCES += db/db_iter.cc
+libpebblesdb_la_SOURCES += db/filename.cc
+libpebblesdb_la_SOURCES += db/log_reader.cc
+libpebblesdb_la_SOURCES += db/log_writer.cc
+libpebblesdb_la_SOURCES += db/memtable.cc
+libpebblesdb_la_SOURCES += db/murmurhash3.cc
+libpebblesdb_la_SOURCES += db/repair.cc
+libpebblesdb_la_SOURCES += db/replay_iterator.cc
+libpebblesdb_la_SOURCES += db/table_cache.cc
+libpebblesdb_la_SOURCES += db/version_edit.cc
+libpebblesdb_la_SOURCES += db/version_set.cc
+libpebblesdb_la_SOURCES += db/write_batch.cc
+libpebblesdb_la_SOURCES += table/block_builder.cc
+libpebblesdb_la_SOURCES += table/block.cc
+libpebblesdb_la_SOURCES += table/filter_block.cc
+libpebblesdb_la_SOURCES += table/format.cc
+libpebblesdb_la_SOURCES += table/iterator.cc
+libpebblesdb_la_SOURCES += table/merger.cc
+libpebblesdb_la_SOURCES += table/table_builder.cc
+libpebblesdb_la_SOURCES += table/table.cc
+libpebblesdb_la_SOURCES += table/two_level_iterator.cc
+libpebblesdb_la_SOURCES += util/arena.cc
+libpebblesdb_la_SOURCES += util/atomic.cc
+libpebblesdb_la_SOURCES += util/bloom.cc
+libpebblesdb_la_SOURCES += util/cache.cc
+libpebblesdb_la_SOURCES += util/coding.cc
+libpebblesdb_la_SOURCES += util/comparator.cc
+libpebblesdb_la_SOURCES += util/crc32c.cc
+libpebblesdb_la_SOURCES += util/env.cc
+libpebblesdb_la_SOURCES += util/env_posix.cc
+libpebblesdb_la_SOURCES += util/filter_policy.cc
+libpebblesdb_la_SOURCES += util/hash.cc
+libpebblesdb_la_SOURCES += util/histogram.cc
+libpebblesdb_la_SOURCES += util/logging.cc
+libpebblesdb_la_SOURCES += util/options.cc
+libpebblesdb_la_SOURCES += util/status.cc
+libpebblesdb_la_SOURCES += port/port_posix.cc
+libpebblesdb_la_LIBADD = $(SNAPPY_LIBS) -lpthread -lsnappy
+libpebblesdb_la_LDFLAGS = -lpthread -lsnappy $(AM_LDFLAGS) $(LDFLAGS)
 
 TESTUTIL = util/testutil.cc
 TESTHARNESS = util/testharness.cc $(TESTUTIL)
@@ -198,11 +198,11 @@ check_PROGRAMS += issue200_test
 TESTS = $(check_PROGRAMS)
 
 benchmark_SOURCES = benchmark.cc
-benchmark_LDADD = libhyperleveldb.la -lpthread -lsnappy -le -lpopt -lygor
+benchmark_LDADD = libpebblesdb.la -lpthread -lsnappy -le -lpopt -lygor
 benchmark_LDFLAGS = -no-install
 
 db_bench_SOURCES = db/db_bench.cc $(TESTUTIL)
-db_bench_LDADD = libhyperleveldb.la -lpthread -lsnappy
+db_bench_LDADD = libpebblesdb.la -lpthread -lsnappy
 
 db_bench_sqlite3_SOURCES = doc/bench/db_bench_sqlite3.cc $(TESTUTIL)
 db_bench_sqlite3_LDADD = -lsqlite3
@@ -211,73 +211,73 @@ db_bench_tree_db_SOURCES = doc/bench/db_bench_tree_db.cc $(TESTUTIL)
 db_bench_tree_db_LDADD = -lkyotocabinet
 
 leveldbutil_SOURCES = db/leveldb_main.cc
-leveldbutil_LDADD = libhyperleveldb.la -lpthread -lsnappy
+leveldbutil_LDADD = libpebblesdb.la -lpthread -lsnappy
 
 leveldb_dump_all_SOURCES = leveldb-dump-all.cc
-leveldb_dump_all_LDADD = libhyperleveldb.la -lpthread
+leveldb_dump_all_LDADD = libpebblesdb.la -lpthread
 
 leveldb_verify_SOURCES = leveldb-verify.cc
-leveldb_verify_LDADD = libhyperleveldb.la -lpthread
+leveldb_verify_LDADD = libpebblesdb.la -lpthread
 
 autocompact_test_SOURCES = db/autocompact_test.cc $(TESTHARNESS)
-autocompact_test_LDADD = libhyperleveldb.la -lpthread
+autocompact_test_LDADD = libpebblesdb.la -lpthread
 
 arena_test_SOURCES = util/arena_test.cc $(TESTHARNESS)
-arena_test_LDADD = libhyperleveldb.la -lpthread
+arena_test_LDADD = libpebblesdb.la -lpthread
 
 bloom_test_SOURCES = util/bloom_test.cc $(TESTHARNESS)
-bloom_test_LDADD = libhyperleveldb.la -lpthread
+bloom_test_LDADD = libpebblesdb.la -lpthread
 
 c_test_SOURCES = db/c_test.c $(TESTHARNESS)
-c_test_LDADD = libhyperleveldb.la -lpthread
+c_test_LDADD = libpebblesdb.la -lpthread
 
 cache_test_SOURCES = util/cache_test.cc $(TESTHARNESS)
-cache_test_LDADD = libhyperleveldb.la -lpthread
+cache_test_LDADD = libpebblesdb.la -lpthread
 
 coding_test_SOURCES = util/coding_test.cc $(TESTHARNESS)
-coding_test_LDADD = libhyperleveldb.la -lpthread
+coding_test_LDADD = libpebblesdb.la -lpthread
 
 corruption_test_SOURCES = db/corruption_test.cc $(TESTHARNESS)
-corruption_test_LDADD = libhyperleveldb.la -lpthread
+corruption_test_LDADD = libpebblesdb.la -lpthread
 
 crc32c_test_SOURCES = util/crc32c_test.cc $(TESTHARNESS)
-crc32c_test_LDADD = libhyperleveldb.la -lpthread
+crc32c_test_LDADD = libpebblesdb.la -lpthread
 
 db_test_SOURCES = db/db_test.cc $(TESTHARNESS)
-db_test_LDADD = libhyperleveldb.la -lpthread
+db_test_LDADD = libpebblesdb.la -lpthread
 
 dbformat_test_SOURCES = db/dbformat_test.cc $(TESTHARNESS)
-dbformat_test_LDADD = libhyperleveldb.la -lpthread
+dbformat_test_LDADD = libpebblesdb.la -lpthread
 
 env_test_SOURCES = util/env_test.cc $(TESTHARNESS)
-env_test_LDADD = libhyperleveldb.la -lpthread
+env_test_LDADD = libpebblesdb.la -lpthread
 
 filename_test_SOURCES = db/filename_test.cc $(TESTHARNESS)
-filename_test_LDADD = libhyperleveldb.la -lpthread
+filename_test_LDADD = libpebblesdb.la -lpthread
 
 filter_block_test_SOURCES = table/filter_block_test.cc $(TESTHARNESS)
-filter_block_test_LDADD = libhyperleveldb.la -lpthread
+filter_block_test_LDADD = libpebblesdb.la -lpthread
 
 log_test_SOURCES = db/log_test.cc $(TESTHARNESS)
-log_test_LDADD = libhyperleveldb.la -lpthread
+log_test_LDADD = libpebblesdb.la -lpthread
 
 table_test_SOURCES = table/table_test.cc $(TESTHARNESS)
-table_test_LDADD = libhyperleveldb.la -lpthread
+table_test_LDADD = libpebblesdb.la -lpthread
 
 skiplist_test_SOURCES = db/skiplist_test.cc $(TESTHARNESS)
-skiplist_test_LDADD = libhyperleveldb.la -lpthread
+skiplist_test_LDADD = libpebblesdb.la -lpthread
 
 version_edit_test_SOURCES = db/version_edit_test.cc $(TESTHARNESS)
-version_edit_test_LDADD = libhyperleveldb.la -lpthread
+version_edit_test_LDADD = libpebblesdb.la -lpthread
 
 version_set_test_SOURCES = db/version_set_test.cc $(TESTHARNESS)
-version_set_test_LDADD = libhyperleveldb.la -lpthread
+version_set_test_LDADD = libpebblesdb.la -lpthread
 
 write_batch_test_SOURCES = db/write_batch_test.cc $(TESTHARNESS)
-write_batch_test_LDADD = libhyperleveldb.la -lpthread
+write_batch_test_LDADD = libpebblesdb.la -lpthread
 
 issue178_test_SOURCES = issues/issue178_test.cc $(TESTHARNESS)
-issue178_test_LDADD = libhyperleveldb.la -lpthread
+issue178_test_LDADD = libpebblesdb.la -lpthread
 
 issue200_test_SOURCES = issues/issue200_test.cc $(TESTHARNESS)
-issue200_test_LDADD = libhyperleveldb.la -lpthread
+issue200_test_LDADD = libpebblesdb.la -lpthread

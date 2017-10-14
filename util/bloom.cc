@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include "hyperleveldb/filter_policy.h"
+#include "pebblesdb/filter_policy.h"
 
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/slice.h"
 #include "util/hash.h"
 #include <stdio.h>
 

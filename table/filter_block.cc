@@ -4,9 +4,9 @@
 
 #include "table/filter_block.h"
 
-#include "hyperleveldb/filter_policy.h"
+#include "pebblesdb/filter_policy.h"
 #include "util/coding.h"
-#include "hyperleveldb/env.h"
+#include "pebblesdb/env.h"
 
 namespace leveldb {
 

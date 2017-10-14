@@ -5,8 +5,8 @@
 #ifndef STORAGE_LEVELDB_UTIL_TESTUTIL_H_
 #define STORAGE_LEVELDB_UTIL_TESTUTIL_H_
 
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/slice.h"
 #include "util/random.h"
 
 namespace leveldb {

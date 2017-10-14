@@ -4,11 +4,11 @@
 
 #define __STDC_LIMIT_MACROS
 
-#include "hyperleveldb/db.h"
+#include "pebblesdb/db.h"
 
 #include "db/memtable.h"
 #include "db/write_batch_internal.h"
-#include "hyperleveldb/env.h"
+#include "pebblesdb/env.h"
 #include "util/logging.h"
 #include "util/testharness.h"
 

@@ -40,8 +40,8 @@
 #include <e/slice.h>
 
 // LevelDB
-#include <hyperleveldb/db.h>
-#include <hyperleveldb/filter_policy.h>
+#include <pebblesdb/db.h>
+#include <pebblesdb/filter_policy.h>
 
 void
 decode(const char* data, size_t data_sz, std::vector<char>* out)

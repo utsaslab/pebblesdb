@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <stdint.h>
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/slice.h"
 #include "port/port.h"
 #include "util/coding.h"
 #include "util/logging.h"

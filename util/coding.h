@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/slice.h"
 #include "port/port.h"
 #include "util/string_builder.h"
 

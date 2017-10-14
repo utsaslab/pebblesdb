@@ -7,9 +7,9 @@
 
 #include <string>
 #include <stdint.h>
-#include "hyperleveldb/slice.h"
-#include "hyperleveldb/status.h"
-#include "hyperleveldb/table_builder.h"
+#include "pebblesdb/slice.h"
+#include "pebblesdb/status.h"
+#include "pebblesdb/table_builder.h"
 
 namespace leveldb {
 

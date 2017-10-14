@@ -4,9 +4,9 @@
 
 #define __STDC_LIMIT_MACROS
 
-#include "hyperleveldb/db.h"
+#include "pebblesdb/db.h"
 #include "db/db_impl.h"
-#include "hyperleveldb/cache.h"
+#include "pebblesdb/cache.h"
 #include "util/testharness.h"
 #include "util/testutil.h"
 

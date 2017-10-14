@@ -7,8 +7,8 @@
 
 #include <stdint.h>
 #include <list>
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/replay_iterator.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/replay_iterator.h"
 #include "db/dbformat.h"
 #include "db/memtable.h"
 

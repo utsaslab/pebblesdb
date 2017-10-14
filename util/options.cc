@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include "hyperleveldb/options.h"
+#include "pebblesdb/options.h"
 
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/env.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/env.h"
 
 namespace leveldb {
 

@@ -2,19 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
-#include "hyperleveldb/c.h"
+#include "pebblesdb/c.h"
 
 #include <stdlib.h>
 #include <unistd.h>
-#include "hyperleveldb/cache.h"
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/filter_policy.h"
-#include "hyperleveldb/iterator.h"
-#include "hyperleveldb/options.h"
-#include "hyperleveldb/status.h"
-#include "hyperleveldb/write_batch.h"
+#include "pebblesdb/cache.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/filter_policy.h"
+#include "pebblesdb/iterator.h"
+#include "pebblesdb/options.h"
+#include "pebblesdb/status.h"
+#include "pebblesdb/write_batch.h"
 
 // Fixing all these warnings is burdensome, and we don't advocate this code's
 // usage.  It will be no more incorrect than LevelDB, and it will stay out of

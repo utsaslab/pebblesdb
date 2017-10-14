@@ -30,8 +30,8 @@
 
 #include <algorithm>
 #include <assert.h>
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/table_builder.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/table_builder.h"
 #include "util/coding.h"
 
 namespace leveldb {

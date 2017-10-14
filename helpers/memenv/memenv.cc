@@ -4,8 +4,8 @@
 
 #include "helpers/memenv/memenv.h"
 
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/status.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/status.h"
 #include "port/port.h"
 #include "util/mutexlock.h"
 #include <map>
