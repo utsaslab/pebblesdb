@@ -3,10 +3,10 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: HyperLevelDB
+Name: PebblesDB
 Description: A fast and lightweight key-value storage library
 Version: @VERSION@
 
 Requires:
-Libs: -L${libdir} -lhyperleveldb
+Libs: -L${libdir} -lpebblesdb
 Cflags: -I${includedir}

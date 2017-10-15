@@ -6,7 +6,7 @@
 #define STORAGE_LEVELDB_INCLUDE_TABLE_H_
 
 #include <stdint.h>
-#include "hyperleveldb/iterator.h"
+#include "pebblesdb/iterator.h"
 #include "util/timer.h"
 
 namespace leveldb {

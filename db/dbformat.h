@@ -6,11 +6,11 @@
 #define STORAGE_LEVELDB_DB_FORMAT_H_
 
 #include <stdio.h>
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/filter_policy.h"
-#include "hyperleveldb/slice.h"
-#include "hyperleveldb/table_builder.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/filter_policy.h"
+#include "pebblesdb/slice.h"
+#include "pebblesdb/table_builder.h"
 #include "util/coding.h"
 #include "util/logging.h"
 

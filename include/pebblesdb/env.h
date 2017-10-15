@@ -17,7 +17,7 @@
 #include <vector>
 #include <stdarg.h>
 #include <stdint.h>
-#include "hyperleveldb/status.h"
+#include "pebblesdb/status.h"
 
 namespace leveldb {
 

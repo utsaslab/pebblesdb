@@ -6,9 +6,9 @@
 
 #include "db/memtable.h"
 #include "db/dbformat.h"
-#include "hyperleveldb/comparator.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/iterator.h"
+#include "pebblesdb/comparator.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/iterator.h"
 #include "util/coding.h"
 #include "util/mutexlock.h"
 

@@ -20,8 +20,8 @@
 #if defined(LEVELDB_PLATFORM_ANDROID)
 #include <sys/stat.h>
 #endif
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/slice.h"
 #include "port/port.h"
 #include "util/logging.h"
 #include "util/mutexlock.h"

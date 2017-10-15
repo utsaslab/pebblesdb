@@ -8,14 +8,15 @@
 
 #include <algorithm>
 #include <stdio.h>
+#include <cmath>
 #include "db/dbformat.h"
 #include "db/filename.h"
 #include "db/log_reader.h"
 #include "db/log_writer.h"
 #include "db/memtable.h"
 #include "db/table_cache.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/table_builder.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/table_builder.h"
 #include "table/merger.h"
 #include "table/two_level_iterator.h"
 #include "util/coding.h"
@@ -2538,7 +2539,12 @@ unsigned int VersionSet::RangeDifference(Slice a, Slice b) {
     MurmurHash3_x86_32(input_a, size_a, murmur_seed, &hash_a);
     unsigned int hash_b;
     MurmurHash3_x86_32(input_b, size_b, murmur_seed, &hash_b);
-    return std::abs(hash_a - hash_b);
+    // abs makes no fucking sense here
+    if (hash_a < hash_b) {
+        return hash_b - hash_a;
+    } else {
+        return hash_a - hash_b;
+    }
 }
 
 uint64_t VersionSet::GetOverlappingRangeBetweenFiles(FileMetaData* f1, FileMetaData* f2) {

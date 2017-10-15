@@ -8,12 +8,12 @@
 #include "db/log_reader.h"
 #include "db/version_edit.h"
 #include "db/write_batch_internal.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/iterator.h"
-#include "hyperleveldb/options.h"
-#include "hyperleveldb/status.h"
-#include "hyperleveldb/table.h"
-#include "hyperleveldb/write_batch.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/iterator.h"
+#include "pebblesdb/options.h"
+#include "pebblesdb/status.h"
+#include "pebblesdb/table.h"
+#include "pebblesdb/write_batch.h"
 #include "util/logging.h"
 
 namespace leveldb {

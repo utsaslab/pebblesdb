@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/slice.h"
 #include "util/hash.h"
 #include "util/string_builder.h"
 

@@ -9,8 +9,8 @@
 
 #include <stdint.h>
 #include <string>
-#include "hyperleveldb/slice.h"
-#include "hyperleveldb/status.h"
+#include "pebblesdb/slice.h"
+#include "pebblesdb/status.h"
 #include "port/port.h"
 
 namespace leveldb {

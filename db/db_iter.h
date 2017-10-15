@@ -6,7 +6,7 @@
 #define STORAGE_LEVELDB_DB_DB_ITER_H_
 
 #include <stdint.h>
-#include "hyperleveldb/db.h"
+#include "pebblesdb/db.h"
 #include "db/dbformat.h"
 
 namespace leveldb {

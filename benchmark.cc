@@ -26,9 +26,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 // HyperLevelDB
-#include <hyperleveldb/cache.h>
-#include <hyperleveldb/db.h>
-#include <hyperleveldb/filter_policy.h>
+#include <pebblesdb/cache.h>
+#include <pebblesdb/db.h>
+#include <pebblesdb/filter_policy.h>
 
 // STL
 #include <tr1/memory>

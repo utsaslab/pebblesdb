@@ -9,9 +9,9 @@
 #include "db/table_cache.h"
 #include "db/version_edit.h"
 #include "db/version_set.h"
-#include "hyperleveldb/db.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/iterator.h"
+#include "pebblesdb/db.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/iterator.h"
 
 namespace leveldb {
 

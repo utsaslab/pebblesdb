@@ -29,7 +29,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.62])
-AC_INIT([hyperleveldb], [1.0.dev], [robert@hyperdex.org])
+AC_INIT([pebblesdb], [1.0.dev], [vijay@cs.utexas.edu])
 m4_define([serial_tests], [
     m4_esyscmd([case `automake --version | head -n 1` in
                 *1.11*);;
@@ -40,7 +40,7 @@ AM_INIT_AUTOMAKE(foreign serial_tests subdir-objects dist-bzip2)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 LT_PREREQ([2.2])
 LT_INIT
-AC_CONFIG_SRCDIR([include/hyperleveldb/db.h])
+AC_CONFIG_SRCDIR([include/pebblesdb/db.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -113,5 +113,5 @@ fi
 AC_SUBST(SNAPPY_FLAGS)
 AC_SUBST(SNAPPY_LIBS)
 
-AC_CONFIG_FILES([Makefile libhyperleveldb.pc hyperleveldb.upack])
+AC_CONFIG_FILES([Makefile libpebblesdb.pc])
 AC_OUTPUT

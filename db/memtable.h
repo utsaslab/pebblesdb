@@ -6,7 +6,7 @@
 #define STORAGE_LEVELDB_DB_MEMTABLE_H_
 
 #include <string>
-#include "hyperleveldb/db.h"
+#include "pebblesdb/db.h"
 #include "db/dbformat.h"
 #include "db/skiplist.h"
 #include "util/arena.h"

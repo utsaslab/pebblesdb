@@ -10,8 +10,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/slice.h"
 
 namespace leveldb {
 

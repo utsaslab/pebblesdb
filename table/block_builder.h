@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <stdint.h>
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/slice.h"
 #include "util/string_builder.h"
 
 namespace leveldb {

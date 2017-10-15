@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/slice.h"
 #include "util/random.h"
 
 namespace leveldb {

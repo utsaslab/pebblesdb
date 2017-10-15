@@ -7,7 +7,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "hyperleveldb/iterator.h"
+#include "pebblesdb/iterator.h"
 
 namespace leveldb {
 

@@ -5,8 +5,8 @@
 #include "db/table_cache.h"
 
 #include "db/filename.h"
-#include "hyperleveldb/env.h"
-#include "hyperleveldb/table.h"
+#include "pebblesdb/env.h"
+#include "pebblesdb/table.h"
 #include "util/coding.h"
 
 #ifdef TIMER_LOG

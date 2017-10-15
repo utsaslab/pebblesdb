@@ -16,9 +16,9 @@
 
 #define __STDC_LIMIT_MACROS
 
-#include "hyperleveldb/write_batch.h"
+#include "pebblesdb/write_batch.h"
 
-#include "hyperleveldb/db.h"
+#include "pebblesdb/db.h"
 #include "db/dbformat.h"
 #include "db/memtable.h"
 #include "db/write_batch_internal.h"

@@ -19,7 +19,7 @@
 #define STORAGE_LEVELDB_INCLUDE_CACHE_H_
 
 #include <stdint.h>
-#include "hyperleveldb/slice.h"
+#include "pebblesdb/slice.h"
 
 namespace leveldb {
 

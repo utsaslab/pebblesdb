@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include "db/filename.h"
 #include "db/dbformat.h"
-#include "hyperleveldb/env.h"
+#include "pebblesdb/env.h"
 #include "util/logging.h"
 
 namespace leveldb {
