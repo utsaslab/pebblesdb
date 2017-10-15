@@ -20,8 +20,10 @@ If you are using LevelDB in your deployment, do consider trying out
 PebblesDB! PebblesDB can also be used to replace RocksDB as long as
 the RocksDB-specific functionality like column families are not used.
 
-Please cite the following paper if you use PebblesDB: [PebblesDB:
-Building Key-Value Stores using Fragmented Log-Structured Merge
+Please
+[cite](http://www.cs.utexas.edu/~vijay/bibtex/sosp17-pebblesdb.bib)
+the following paper if you use PebblesDB: [PebblesDB: Building
+Key-Value Stores using Fragmented Log-Structured Merge
 Trees](http://www.cs.utexas.edu/~vijay/papers/sosp17-pebblesdb.pdf). Pandian
 Raju, Rohan Kadekodi, Vijay Chidambaram, Ittai Abraham. [SOSP
 17](https://www.sigops.org/sosp/sosp17/). [Bibtex](http://www.cs.utexas.edu/~vijay/bibtex/sosp17-pebblesdb.bib)
@@ -34,8 +36,15 @@ the other stores on write throughput, equals other stores on read
 throughput, and incurs a penalty for small range queries on fully
 compacted key-value stores. Please see the paper for more details.
 
- ___
+___
 
+### Dependencies
+
+PebblesDB requires `libsnappy` and `libtool`. To install on Linux, please use
+`sudo apt-get install libsnappy-dev libtool`.
+
+PebblesDB does not currently compile on Mac OSX. 
+    
 ### Installation
 `$ cd pebblesdb/`  
 `$ autoreconf -i`  
@@ -58,16 +67,41 @@ Sample usage:
 ___
 
 ### Optimizations in PebblesDB
-PebblesDB uses FLSM data structure to logically arrange the sstables on disk. FLSM helps in achieving high write throughput by reducing the write amplification. But in FLSM, each guard can contain multiple overlapping sstables. Hence a read or seek over the database requires examining one guard (multiple sstables) per level, thereby increasing the read/seek latency. PebblesDB employs some optimizations to tackle these challenges as follows:  
+
+PebblesDB uses FLSM data structure to logically arrange the sstables
+on disk. FLSM helps in achieving high write throughput by reducing the
+write amplification. But in FLSM, each guard can contain multiple
+overlapping sstables. Hence a read or seek over the database requires
+examining one guard (multiple sstables) per level, thereby increasing
+the read/seek latency. PebblesDB employs some optimizations to tackle
+these challenges as follows:
 
 #### Read optimization
-* PebblesDB makes use of sstable level bloom filter instead of block level bloom filter used in HyperLevelDB or LevelDB. With this optimization, even though a guard can contain multiple sstables, PebblesDB effectively reads only one sstable from disk per level.  
-* By default, this optimization is turned on, but this can be disabled by commenting the macro `#define FILE_LEVEL_FILTER` in `db/version_set.h`. Remember to do `make db_bench` after making a change.  
+
+* PebblesDB makes use of sstable level bloom filter instead of block
+  level bloom filter used in HyperLevelDB or LevelDB. With this
+  optimization, even though a guard can contain multiple sstables,
+  PebblesDB effectively reads only one sstable from disk per level.
+
+* By default, this optimization is turned on, but this can be disabled
+  by commenting the macro `#define FILE_LEVEL_FILTER` in
+  `db/version_set.h`. Remember to do `make db_bench` after making a
+  change.
 
 #### Seek optimization
-Sstable level bloom filter can't be used to reduce the disk read for `seek` operation since `seek` has to examine all files within a guard even if a file doesn't contain the key. To tackle this challenge, PebblesDB does two optimizations:
-1. **Parallel seeks:** PebblesDB employs multiple threads to do `seek()` operation on multiple files within a guard. Note that this optimization might only be helpful when the size of the data set is much larger than the RAM size because otherwise the overhead of thread synchronization conceals the benefits obtained by using multiple threads.  
-By default, this optimization is disabled. This can be enabled by uncommenting `#define SEEK_PARALLEL` in `db/version_set.h`.  
+
+Sstable level bloom filter can't be used to reduce the disk read for
+`seek` operation since `seek` has to examine all files within a guard
+even if a file doesn't contain the key. To tackle this challenge,
+PebblesDB does two optimizations:
+
+1. **Parallel seeks:** PebblesDB employs multiple threads to do
+`seek()` operation on multiple files within a guard. Note that this
+optimization might only be helpful when the size of the data set is
+much larger than the RAM size because otherwise the overhead of thread
+synchronization conceals the benefits obtained by using multiple
+threads.  By default, this optimization is disabled. This can be
+enabled by uncommenting `#define SEEK_PARALLEL` in `db/version_set.h`.
 
 2. **Forced compaction:** When the workload is seek-heavy, PebblesDB
 can be configured to do a seek-based forced compaction which aims at
@@ -80,5 +114,20 @@ be disabled by uncommenting `#define DISABLE_SEEK_BASED_COMPACTION` in
 ___
 
 ### Tuning PebblesDB
-* The amount of overhead PebblesDB has for read/seek workloads as well as the amount of gain it has for write workloads depends on a single parameter: `kMaxFilesPerGuardSentinel`, which determines the maximum number of sstables that can be present within a single guard.
-* This parameter can be set in `db/dbformat.h` (default value: 2). Setting this parameter high will favor write throughput while setting it lower will favor read/seek throughputs.
+
+* The amount of overhead PebblesDB has for read/seek workloads as well
+  as the amount of gain it has for write workloads depends on a single
+  parameter: `kMaxFilesPerGuardSentinel`, which determines the maximum
+  number of sstables that can be present within a single guard.
+
+* This parameter can be set in `db/dbformat.h` (default value:
+  2). Setting this parameter high will favor write throughput while
+  setting it lower will favor read/seek throughputs.
+
+---
+### Contact
+
+Please contact us at `vijay@cs.utexas.edu` with any questions.  Drop
+us a note if you are using or plan to use PebblesDB in your company or
+university.
+ 
