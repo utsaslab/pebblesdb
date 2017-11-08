@@ -41,10 +41,10 @@ ___
 ### Dependencies
 
 PebblesDB requires `libsnappy` and `libtool`. To install on Linux, please use
-`sudo apt-get install libsnappy-dev libtool`.
+`sudo apt-get install libsnappy-dev libtool`. For MacOSX, use `brew install snappy` and instead of `ldconfig`, use `update_dyld_shared_cache`.
 
-PebblesDB was built and compiled with g++-5, so it might not compile with later versions of g++ now. PebblesDB also does not currently compile on Mac OSX. 
-    
+PebblesDB was built and compiled with g++-5, so it might not compile with later versions of g++ now. 
+
 ### Installation
 `$ cd pebblesdb/`  
 `$ autoreconf -i`  
