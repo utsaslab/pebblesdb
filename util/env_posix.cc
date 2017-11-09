@@ -951,7 +951,7 @@ pthread_t PosixEnv::StartThreadAndReturnThreadId(void (*function)(void* arg), vo
 
 void PosixEnv::WaitForThread(unsigned long int th, void** return_status) {
   PthreadCall("wait for thread",
-              pthread_join(th, return_status));
+              pthread_join((pthread_t)th, return_status));
 }
 }  // namespace
 

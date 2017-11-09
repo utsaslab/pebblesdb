@@ -17,6 +17,8 @@
 #include <vector>
 #include <stdarg.h>
 #include <stdint.h>
+#include <pthread.h>
+#include <sys/types.h>
 #include "pebblesdb/status.h"
 
 namespace leveldb {

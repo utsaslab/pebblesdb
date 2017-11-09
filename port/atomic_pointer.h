@@ -26,8 +26,17 @@
 #ifdef OS_WIN
 #include <windows.h>
 #endif
-#ifdef OS_MACOSX
+
+#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+//OSMemoryBarrier() deprecated after v 10.12
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+#define USE_ATOMIC_FENCE 1
+#include <atomic>
+#else
+#define USE_OS_MEMBARRIER 1
 #include <libkern/OSAtomic.h>
+#endif
 #endif
 
 #if defined(_M_X64) || defined(__x86_64__)
@@ -50,11 +59,16 @@ namespace port {
 // http://msdn.microsoft.com/en-us/library/ms684208(v=vs.85).aspx
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
-// Mac OS
-#elif defined(OS_MACOSX)
+// Mac OS version < 10.12
+#elif defined(USE_OS_MEMBARRIER)
 inline void MemoryBarrier() {
   OSMemoryBarrier();
 }
+#define LEVELDB_HAVE_MEMORY_BARRIER
+
+//For higher versions of MAC, the barriers are handled
+//in atomic-pointer operations
+#elif defined(__APPLE__)
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
 // Gcc on x86
@@ -116,11 +130,20 @@ class AtomicPointer {
   inline void NoBarrier_Store(void* v) { rep_ = v; }
   inline void* Acquire_Load() const {
     void* result = rep_;
-    MemoryBarrier();
+
+	#ifdef USE_ATOMIC_FENCE
+    		std::atomic_thread_fence(std::memory_order_acquire);
+	#else
+    		MemoryBarrier();
+	#endif
     return result;
   }
   inline void Release_Store(void* v) {
-    MemoryBarrier();
+	#ifdef USE_ATOMIC_FENCE
+		std::atomic_thread_fence(std::memory_order_release);
+	#else
+		MemoryBarrier();
+	#endif
     rep_ = v;
   }
 };
