@@ -34,7 +34,7 @@ has a list of experiments evaluating PebblesDB vs LevelDB,
 HyperLevelDB, and RocksDB. The summary is that PebblesDB outperforms
 the other stores on write throughput, equals other stores on read
 throughput, and incurs a penalty for small range queries on fully
-compacted key-value stores. Please see the paper for more details.
+compacted key-value stores. PebblesDB achieves **6x** the write throughput of RocksDB, while providing similar read throughput, and performing 50% lesser IO. Please see the paper for more details.
 
 ___
 
