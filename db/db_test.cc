@@ -1780,6 +1780,9 @@ TEST(DBTest, FilesDeletedAfterCompaction) {
   for (int i = 0; i < N; i++) {
     ASSERT_EQ(Key(i), Get(Key(i)));
   }
+ 
+  //Count number of files read to Get() N existing values in the db
+  //Extra reads should be less than 3%
   int reads_1 = db_->total_files_read;
   fprintf(stderr, "%d present => %d reads\n", N, reads_1);
   ASSERT_GE(reads_1, N);
@@ -1789,6 +1792,9 @@ TEST(DBTest, FilesDeletedAfterCompaction) {
   for (int i = 0; i < N; i++) {
     ASSERT_EQ("NOT_FOUND", Get(Key(i) + ".missing"));
   }
+  
+  //Files read to serve Get() of N non existant keys.
+  //Should not exceed 3%
   int reads_2 = db_->total_files_read - reads_1;
   fprintf(stderr, "%d missing => %d reads\n", N, reads_2);
   ASSERT_LE(reads_2, 3*N/100);
