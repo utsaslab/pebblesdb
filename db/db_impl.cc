@@ -1630,6 +1630,7 @@ Status DBImpl::Get(const ReadOptions& options,
 
       start_timer(GET_TIME_TO_CHECK_VERSION);
       s = current->Get(options, lkey, value, &stats);
+      total_files_read += current->num_files_read;
       record_timer(GET_TIME_TO_CHECK_VERSION);
 
       have_stat_update = true;
