@@ -385,6 +385,8 @@ class Version {
 	  }
   }
 
+    int num_files_read;
+    
  private:
   friend class Compaction;
   friend class VersionSet;

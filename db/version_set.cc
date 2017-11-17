@@ -867,7 +867,7 @@ Status Version::Get(const ReadOptions& options,
   FileMetaData* last_file_read = NULL;
   int last_file_read_level = -1;
 
-  int num_files_read = 0;
+  num_files_read = 0;
   // We can search level-by-level since entries never hop across
   // levels.  Therefore we are guaranteed that if we find data
   // in an smaller level, later levels are irrelevant.
