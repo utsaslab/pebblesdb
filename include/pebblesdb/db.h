@@ -177,6 +177,8 @@ class DB {
   // Release a previously allocated replay iterator.
   virtual void ReleaseReplayIterator(ReplayIterator* iter) = 0;
 
+    int total_files_read = 0;
+    
  private:
   // No copying allowed
   DB(const DB&);
