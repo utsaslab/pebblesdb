@@ -3019,6 +3019,8 @@ bool VersionSet::IsAllLevelsCompacted() {
 unsigned VersionSet::PickCompactionLevel(bool* locked, bool seek_driven, bool* force_compact) const {
   // Find an unlocked level has score >= 1 where level + 1 has score < 1.
   unsigned level = config::kNumLevels;
+  bool no_horizontal_compact = false;
+  int count_guard_scores = 0;
   *force_compact = false;
   for (unsigned i = 1; i + 1 < config::kNumLevels; ++i) {
     if (locked[i] || locked[i + 1]) {
@@ -3089,11 +3091,28 @@ unsigned VersionSet::PickCompactionLevel(bool* locked, bool seek_driven, bool* f
 		   * If the total amount of data in the level is less than threshold or if the next level has huge amount of
 		   * data compared to this level, compact this level.
 		   * */
-		  if (inter_level_ratio <= 25.0 || next_level_size_in_mb < FORCE_COMPACT_SIZE_THRESHOLD_IN_MB) {
-			  *force_compact = true;
-			  level = i;
-			  break;
-		  }
+          if (inter_level_ratio <= 25.0 || next_level_size_in_mb < FORCE_COMPACT_SIZE_THRESHOLD_IN_MB) {
+              
+              /*
+               * If the amount of data in this level is very less (ratio of next level to current > 25) and if any of the sentinal or guard compaction score is > 1, then horizontal compaction will be triggered. If not, then this level requires no compaction. 
+               * Check if horizontal compaction at this level is possible at all before setting force_compact to true, as this might result in a loop between PickCompactionLevel and the thread performing compaction.
+               */
+              if(inter_level_ratio > 25.0 && current_->compaction_scores_[level] < 1
+                 && current_-> sentinel_compaction_scores_[level] < 1){
+                  for(int k = 0; k < current_->guard_compaction_scores_[level].size(); k++)
+                      if(current_->guard_compaction_scores_[level][k] < 1)
+                          count_guard_scores ++ ;
+                  if(count_guard_scores == current_->guard_compaction_scores_[level].size()){
+                      no_horizontal_compact = true;
+                  }
+              }
+              if(no_horizontal_compact)
+                  continue;
+              
+              *force_compact = true;
+              level = i;
+              break;              
+          }
 	  }
   }
   return level;
