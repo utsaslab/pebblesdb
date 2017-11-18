@@ -3093,7 +3093,10 @@ unsigned VersionSet::PickCompactionLevel(bool* locked, bool seek_driven, bool* f
 		   * */
           if (inter_level_ratio <= 25.0 || next_level_size_in_mb < FORCE_COMPACT_SIZE_THRESHOLD_IN_MB) {
               
-              //Check if horizontal compaction is possible at all
+              /*
+               * If the amount of data in this level is very less (ratio of next level to current > 25) and if any of the sentinal or guard compaction score is > 1, then horizontal compaction will be triggered. If not, then this level requires no compaction. 
+               * Check if horizontal compaction at this level is possible at all before setting force_compact to true, as this might result in a loop between PickCompactionLevel and the thread performing compaction.
+               */
               if(inter_level_ratio > 25.0 && current_->compaction_scores_[level] < 1
                  && current_-> sentinel_compaction_scores_[level] < 1){
                   for(int k = 0; k < current_->guard_compaction_scores_[level].size(); k++)
