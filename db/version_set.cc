@@ -3097,12 +3097,12 @@ unsigned VersionSet::PickCompactionLevel(bool* locked, bool seek_driven, bool* f
                * If the amount of data in this level is very less (ratio of next level to current > 25) and if any of the sentinal or guard compaction score is > 1, then horizontal compaction will be triggered. If not, then this level requires no compaction. 
                * Check if horizontal compaction at this level is possible at all before setting force_compact to true, as this might result in a loop between PickCompactionLevel and the thread performing compaction.
                */
-              if(inter_level_ratio > 25.0 && current_->compaction_scores_[level] < 1
-                 && current_-> sentinel_compaction_scores_[level] < 1){
-                  for(int k = 0; k < current_->guard_compaction_scores_[level].size(); k++)
-                      if(current_->guard_compaction_scores_[level][k] < 1)
+              if(inter_level_ratio > 25.0 && current_->compaction_scores_[i] < 1
+                 && current_-> sentinel_compaction_scores_[i] < 1){
+                  for(int k = 0; k < current_->guard_compaction_scores_[i].size(); k++)
+                      if(current_->guard_compaction_scores_[i][k] < 1)
                           count_guard_scores ++ ;
-                  if(count_guard_scores == current_->guard_compaction_scores_[level].size()){
+                  if(count_guard_scores == current_->guard_compaction_scores_[i].size()){
                       no_horizontal_compact = true;
                   }
               }
