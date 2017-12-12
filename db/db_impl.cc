@@ -1645,7 +1645,9 @@ Status DBImpl::Get(const ReadOptions& options,
   if (have_stat_update && current->UpdateStats(stats)) {
     bg_compaction_cv_.Signal();
   }
-  ++straight_reads_;
+  //Disable compaction on continous read(Get) requests. COmpaction is triggered
+  //only for contiguous seeks. 
+  //++straight_reads_;
   mem->Unref();
   if (imm != NULL) {
 	 imm->Unref();
