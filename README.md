@@ -14,7 +14,7 @@ compatible with HyperLevelDB and LevelDB. Thus, PebblesDB is a
 *drop-in* replacement for LevelDB and HyperLevelDB. The full paper on
 PebblesDB can be found
 [here](http://www.cs.utexas.edu/~vijay/papers/sosp17-pebblesdb.pdf
-"PebblesDB SOSP'17").
+"PebblesDB SOSP'17"). The slides for the SOSP 17 talk, which explains the core ideas behind PebblesDB, can be found [here](http://www.cs.utexas.edu/~vijay/papers/pebblesdb-sosp17-slides.pdf). 
 
 If you are using LevelDB in your deployment, do consider trying out
 PebblesDB! PebblesDB can also be used to replace RocksDB as long as
