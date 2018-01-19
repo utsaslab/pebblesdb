@@ -2,7 +2,7 @@
 
 PebblesDB is a write-optimized key-value store which is built using
 the novel FLSM (Fragmented Log-Structured Merge Tree) data
-structure. FLSM is a modification of standard LSM data structure which
+structure. FLSM is a modification of the standard log-structured merge tree data structure which
 aims at achieving higher write throughput and lower write
 amplification without compromising on read throughput.
 
@@ -44,7 +44,7 @@ ___
 PebblesDB requires `libsnappy` and `libtool`. To install on Linux, please use
 `sudo apt-get install libsnappy-dev libtool`. For MacOSX, use `brew install snappy` and instead of `ldconfig`, use `update_dyld_shared_cache`.
 
-PebblesDB was built, compiled, and test with g++-4.7, g++-4.9, and g++-5. It may not work with other versions of g++ and other C++ compilers. 
+PebblesDB was built, compiled, and tested with g++-4.7, g++-4.9, and g++-5. It may not work with other versions of g++ and other C++ compilers. 
 
 ### Installation
 `$ cd pebblesdb/`  
@@ -69,8 +69,8 @@ ___
 
 ### Optimizations in PebblesDB
 
-PebblesDB uses FLSM data structure to logically arrange the sstables
-on disk. FLSM helps in achieving high write throughput by reducing the
+PebblesDB uses the FLSM data structure to logically arrange the sstables
+on disk. FLSM helps in achieving high write throughput by reducing
 write amplification. But in FLSM, each guard can contain multiple
 overlapping sstables. Hence a read or seek over the database requires
 examining one guard (multiple sstables) per level, thereby increasing
@@ -79,7 +79,7 @@ these challenges as follows:
 
 #### Read optimization
 
-* PebblesDB makes use of sstable level bloom filter instead of block
+* PebblesDB makes use of sstable-level bloom filter instead of block
   level bloom filter used in HyperLevelDB or LevelDB. With this
   optimization, even though a guard can contain multiple sstables,
   PebblesDB effectively reads only one sstable from disk per level.
@@ -91,7 +91,7 @@ these challenges as follows:
 
 #### Seek optimization
 
-Sstable level bloom filter can't be used to reduce the disk read for
+Sstable-level bloom filter can't be used to reduce the disk read for
 `seek` operation since `seek` has to examine all files within a guard
 even if a file doesn't contain the key. To tackle this challenge,
 PebblesDB does two optimizations:
@@ -105,8 +105,8 @@ threads.  By default, this optimization is disabled. This can be
 enabled by uncommenting `#define SEEK_PARALLEL` in `db/version_set.h`.
 
 2. **Forced compaction:** When the workload is seek-heavy, PebblesDB
-can be configured to do a seek-based forced compaction which aims at
-reducing the number of files within a guard. This can lead to an
+can be configured to do a seek-based forced compaction which aims to
+reduce the number of files within a guard. This can lead to an
 increase in write IO, but this is a trade-off between write IO and
 seek throughput.  By default, this optimization is enabled. This can
 be disabled by uncommenting `#define DISABLE_SEEK_BASED_COMPACTION` in
