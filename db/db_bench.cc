@@ -122,6 +122,9 @@ static int FLAGS_cache_size = -1;
 // Maximum number of files to keep open at the same time (use default if == 0)
 static int FLAGS_open_files = 0;
 
+// Amount of data per block (initialized to default value by "main")
+static int FLAGS_block_size = 0;
+
 // Number of next operations to do in a ScanRandom workload
 static int FLAGS_num_next = 1;
 
@@ -1191,6 +1194,7 @@ class Benchmark {
     options.block_cache = cache_;
     options.write_buffer_size = FLAGS_write_buffer_size;
     options.max_open_files = FLAGS_open_files;
+    options.block_size = FLAGS_block_size;
     options.filter_policy = filter_policy_;
     Status s = DB::Open(options, FLAGS_db, &db_);
     if (!s.ok()) {
@@ -1582,7 +1586,7 @@ class Benchmark {
 int main(int argc, char** argv) {
   FLAGS_write_buffer_size = leveldb::Options().write_buffer_size;
   FLAGS_open_files = leveldb::Options().max_open_files;
-  FLAGS_open_files = 1000;
+  FLAGS_block_size = leveldb::Options().block_size;
   std::string default_db_path;
 
   for (int i = 1; i < argc; i++) {
@@ -1615,6 +1619,8 @@ int main(int argc, char** argv) {
       FLAGS_write_buffer_size = n;
     } else if (sscanf(argv[i], "--cache_size=%d%c", &n, &junk) == 1) {
       FLAGS_cache_size = n;
+    } else if (sscanf(argv[i], "--block_size=%d%c", &n, &junk) == 1) {
+      FLAGS_block_size = n;
     } else if (sscanf(argv[i], "--bloom_bits=%d%c", &n, &junk) == 1) {
       FLAGS_bloom_bits = n;
     } else if (sscanf(argv[i], "--open_files=%d%c", &n, &junk) == 1) {
