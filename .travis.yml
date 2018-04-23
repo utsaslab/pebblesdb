@@ -1,0 +1,53 @@
+sudo: false
+dist: trusty
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+os:
+  - linux
+
+env:
+  - BUILD_TYPE=Debug
+  - BUILD_TYPE=RelWithDebInfo
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-7
+    - g++-7
+    - clang-5.0
+    - libgoogle-perftools-dev
+    - libkyotocabinet-dev
+    - libsnappy-dev
+    - libsqlite3-dev
+
+install:
+- if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
+- echo ${CC}
+- echo ${CXX}
+- ${CXX} --version
+
+before_script:
+- autoreconf -i
+- ./configure
+
+script:
+- make
+- make db_test
+
+env:
+  global:
+  - ENCRYPTION_LABEL: "8c1ec1f6b778"
+  - COMMIT_AUTHOR_EMAIL: "ferrishu3886@gmail.com"
+
+notifications:
+  email:
+   recipients:
+     - ferrishu3886@gmail.com
+     on_success: change 
+     on_failure: always
