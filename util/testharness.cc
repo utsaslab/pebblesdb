@@ -16,6 +16,7 @@ namespace {
 struct Test {
   const char* base;
   const char* name;
+  // function pointer: https://www.cprogramming.com/tutorial/function-pointers.html
   void (*func)();
 };
 std::vector<Test>* tests;
