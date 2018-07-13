@@ -25,15 +25,48 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
+# ACLOCAL_AMFLAGS: specify where the m4 macros are; need to sync with
+# `AC_CONFIG_MACRO_DIR` in configure.ac.
+# - https://www.gnu.org/software/libtool/manual/html_node/Invoking-libtoolize.html
+# - https://stackoverflow.com/questions/16657991/glibtoolize-on-macos-tells-me-to-consider-adding-i-m4-to-aclocal-amflags-but
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
+
+# AM_CPPFLAGS: it is a list of arguments to the preprocessor
+# https://www.gnu.org/software/automake/manual/html_node/Program-Variables.html
+# https://www.gnu.org/software/automake/manual/html_node/Flag-Variables-Ordering.html
+# abs_top_srcdir: Absolute name of `top_srcdir`, which is the name of the top-level source code directory for the package,
+# which is the name of the directory that contains the source code for that makefile.
+# In this case, `abs_top_srcdir` is abs. path to 'HyperPebblesDB' (e.g.
+# /Users/zeyuan/Documents/projects/HyperPebblesDB)
+# - https://www.gnu.org/software/autoconf/manual/autoconf-2.62/html_node/Preset-Output-Variables.html
 AM_CPPFLAGS = -I${abs_top_srcdir}/include
+
+# AM_CFLAGS: This is the variable the Makefile.am author can use to pass in additional C compiler flags
+# - https://www.gnu.org/software/automake/manual/html_node/Program-Variables.html
 AM_CFLAGS = -DLEVELDB_PLATFORM_POSIX $(SNAPPY_FLAGS) ${EXTRA_CFLAGS} $(WANAL_CFLAGS)
+
+# AM_CXXFLAGS: any flags to pass to the C++ compiler.
+# Note: variable names start with 'AM' are the variables for Makefile.am
+# - https://www.gnu.org/software/automake/manual/html_node/C_002b_002b-Support.html
 AM_CXXFLAGS = -DLEVELDB_PLATFORM_POSIX $(SNAPPY_FLAGS) ${EXTRA_CFLAGS} $(WANAL_CXXFLAGS) -Wno-variadic-macros -std=c++11
+
+# AM_MAKEFLAGS: set this variable if there are flags you must always pass to `make`
+# - https://www.gnu.org/software/automake/manual/html_node/Subdirectories.html
 AM_MAKEFLAGS = --no-print-directory
 
+# pkgconfigdir: the directory to pkgconfig
+# libdir: installation directory for lib/
+# - https://www.gnu.org/software/automake/manual/html_node/Standard-Directory-Variables.html
 pkgconfigdir = $(libdir)/pkgconfig
+
+# pkgconfig_DATA: the content goes inside 'pkgconfig'
+# - https://autotools.io/pkgconfig/file-format.html
 pkgconfig_DATA = libpebblesdb.pc
 
+# EXTRA_DIST: sometimes there are files that must be distributed,
+# but which are not covered in the automatic rules.
+# These files should be listed in the EXTRA_DIST variable
+# - https://www.gnu.org/software/automake/manual/html_node/Basics-of-Distribution.html
 EXTRA_DIST =
 EXTRA_DIST += AUTHORS
 EXTRA_DIST += doc/benchmark.html
@@ -50,6 +83,13 @@ EXTRA_DIST += port/README
 EXTRA_DIST += README
 EXTRA_DIST += TODO
 
+# pkginclude_HEADERS: the header files included in the installation of the package
+# (e.g. the following header files reside in /usr/local/include/pebblesdb; /usr/local
+# is the default path `prefix` variable); 
+# headers to install in system-wide includedir/yourprogram subdir
+# - https://www.gnu.org/software/automake/manual/html_node/Basics-of-Distribution.html
+# - https://realmike.org/blog/2010/07/18/gnu-automake-by-example/
+# - https://modelingwithdata.org/pdfs/111-tip-automake.pdf
 pkginclude_HEADERS =
 pkginclude_HEADERS += include/pebblesdb/cache.h
 pkginclude_HEADERS += include/pebblesdb/c.h
@@ -65,6 +105,11 @@ pkginclude_HEADERS += include/pebblesdb/status.h
 pkginclude_HEADERS += include/pebblesdb/table_builder.h
 pkginclude_HEADERS += include/pebblesdb/table.h
 pkginclude_HEADERS += include/pebblesdb/write_batch.h
+pkginclude_HEADERS += third-party/SuRF/include/surf.hpp
+
+# noinst_HEADERS: the header files that will *NOT* be installed
+# - ftp://ftp.gnu.org/old-gnu/Manuals/automake/html_node/automake_64.html
+# - https://modelingwithdata.org/pdfs/111-tip-automake.pdf
 noinst_HEADERS =
 noinst_HEADERS += db/builder.h
 noinst_HEADERS += db/dbformat.h
@@ -111,8 +156,14 @@ noinst_HEADERS += util/string_builder.h
 noinst_HEADERS += util/testharness.h
 noinst_HEADERS += util/testutil.h
 
+# lib_LTLIBRARIES: the list of libtool libraries to build; .la represents 'libtool archive',
+# which a libtool archive to all the shared libraries format on differet platforms
+# - https://www.gnu.org/software/automake/manual/html_node/Libtool-Libraries.html
+# - https://www.lrde.epita.fr/~adl/dl/autotools.pdf (Slide p.116)
 lib_LTLIBRARIES = libpebblesdb.la
 
+# specify what source files should be included when build the
+# shared library 'libpebblesdb.la'
 libpebblesdb_la_SOURCES =
 libpebblesdb_la_SOURCES += db/builder.cc
 libpebblesdb_la_SOURCES += db/c.cc
@@ -142,6 +193,7 @@ libpebblesdb_la_SOURCES += table/two_level_iterator.cc
 libpebblesdb_la_SOURCES += util/arena.cc
 libpebblesdb_la_SOURCES += util/atomic.cc
 libpebblesdb_la_SOURCES += util/bloom.cc
+libpebblesdb_la_SOURCES += util/surf.cc
 libpebblesdb_la_SOURCES += util/cache.cc
 libpebblesdb_la_SOURCES += util/coding.cc
 libpebblesdb_la_SOURCES += util/comparator.cc
@@ -155,12 +207,24 @@ libpebblesdb_la_SOURCES += util/logging.cc
 libpebblesdb_la_SOURCES += util/options.cc
 libpebblesdb_la_SOURCES += util/status.cc
 libpebblesdb_la_SOURCES += port/port_posix.cc
-libpebblesdb_la_LIBADD = $(SNAPPY_LIBS) -lpthread -lsnappy
-libpebblesdb_la_LDFLAGS = -lpthread -lsnappy $(AM_LDFLAGS) $(LDFLAGS)
 
+# _LIBADD: add the dependency library. In this case, `libpebblesdb.la`
+# depends on pthread and possibly the snappy library. We include them
+# when we build `libpebblesdb.la`.
+# - https://stackoverflow.com/questions/23685981/what-is-the-difference-between-ldadd-and-libadd
+libpebblesdb_la_LIBADD = $(SNAPPY_LIBS) -lpthread -lsnappy #TODO: -lsnappy should be removed because we explicitly set the variable `SNAPPY_LIBS` in configure.ac
+
+# _LDFLAGS: Specify the linker flags for `libpebblesdb.la`
+# - https://www.gnu.org/software/automake/manual/html_node/Flag-Variables-Ordering.html
+libpebblesdb_la_LDFLAGS = -lpthread -lsnappy $(AM_LDFLAGS) $(LDFLAGS) #TODO: -lsnappy should be removed for the same reasoning; if there are test cases associated with snappy library, we should include those test cases only when snappy library is present
+
+# We declare two variables as representative of test-related source files, which
+# will be used later in this file
 TESTUTIL = util/testutil.cc
 TESTHARNESS = util/testharness.cc $(TESTUTIL)
 
+# noinst_PROGRAMS: a program or programs build in the local directory that should be compiled, linked but not installed
+# - http://www.javahotchocolate.com/notes/makefile.html
 noinst_PROGRAMS =
 noinst_PROGRAMS += db_bench
 noinst_PROGRAMS += leveldbutil
@@ -172,10 +236,14 @@ EXTRA_PROGRAMS += leveldb-dump-all
 EXTRA_PROGRAMS += db_bench_sqlite3
 EXTRA_PROGRAMS += db_bench_tree_db
 
+# check_PROGRAMS: Lists the programs that are needed to run `make check`
+# - http://www.adp-gmbh.ch/misc/tools/configure/index.html
+# `make check`: https://stackoverflow.com/questions/1735473/what-does-make-check-do
 check_PROGRAMS =
 check_PROGRAMS += autocompact_test
 check_PROGRAMS += arena_test
 check_PROGRAMS += bloom_test
+check_PROGRAMS += surf_test
 check_PROGRAMS += c_test
 check_PROGRAMS += cache_test
 check_PROGRAMS += coding_test
@@ -194,31 +262,45 @@ check_PROGRAMS += version_set_test
 check_PROGRAMS += write_batch_test
 check_PROGRAMS += issue178_test
 check_PROGRAMS += issue200_test
+check_PROGRAMS += testPebblesDB
 
+# TESTS: Lists the programs that are run `make check`.
+# Because those programs sometimes need to be built themselves, usually one wants to write
+# the line below.
 TESTS = $(check_PROGRAMS)
 
+# Specify the source files, the dependency libraries, and the link flags for the
+# `benchmark` program, which specified in the `EXTRA_PROGRAMS` above.
 benchmark_SOURCES = benchmark.cc
 benchmark_LDADD = libpebblesdb.la -lpthread -lsnappy -le -lpopt -lygor
 benchmark_LDFLAGS = -no-install
 
+# similar as above. `db_bench` program this time instead.
 db_bench_SOURCES = db/db_bench.cc $(TESTUTIL)
 db_bench_LDADD = libpebblesdb.la -lpthread -lsnappy
 
+# similar as above. `db_bench_sqlite3` program this time instead.
 db_bench_sqlite3_SOURCES = doc/bench/db_bench_sqlite3.cc $(TESTUTIL)
 db_bench_sqlite3_LDADD = -lsqlite3
 
+# similar as above. `db_bench_tree_db` program this time instead.
 db_bench_tree_db_SOURCES = doc/bench/db_bench_tree_db.cc $(TESTUTIL)
 db_bench_tree_db_LDADD = -lkyotocabinet
 
+# similar as above. `leveldbutil` program this time instead.
 leveldbutil_SOURCES = db/leveldb_main.cc
 leveldbutil_LDADD = libpebblesdb.la -lpthread -lsnappy
 
+# similar as above. `leveldb_dump_all` program this time instead.
 leveldb_dump_all_SOURCES = leveldb-dump-all.cc
 leveldb_dump_all_LDADD = libpebblesdb.la -lpthread
 
+# similar as above. `leveldb_verify` program this time instead.
 leveldb_verify_SOURCES = leveldb-verify.cc
 leveldb_verify_LDADD = libpebblesdb.la -lpthread
 
+# Now we specify the source files and dependency library for the test
+# programs specified in `check_PROGRAMS`
 autocompact_test_SOURCES = db/autocompact_test.cc $(TESTHARNESS)
 autocompact_test_LDADD = libpebblesdb.la -lpthread
 
@@ -227,6 +309,9 @@ arena_test_LDADD = libpebblesdb.la -lpthread
 
 bloom_test_SOURCES = util/bloom_test.cc $(TESTHARNESS)
 bloom_test_LDADD = libpebblesdb.la -lpthread
+
+surf_test_SOURCES = util/surf_test.cc $(TESTHARNESS)
+surf_test_LDADD = libpebblesdb.la -lpthread
 
 c_test_SOURCES = db/c_test.c $(TESTHARNESS)
 c_test_LDADD = libpebblesdb.la -lpthread
@@ -281,3 +366,7 @@ issue178_test_LDADD = libpebblesdb.la -lpthread
 
 issue200_test_SOURCES = issues/issue200_test.cc $(TESTHARNESS)
 issue200_test_LDADD = libpebblesdb.la -lpthread
+
+testPebblesDB_SOURCES = learning/testPebblesDB.cc
+testPebblesDB_LDADD = libpebblesdb.la -lpthread
+

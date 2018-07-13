@@ -105,6 +105,14 @@ class Mutex {
   void Unlock();
   void AssertHeld() { }
 
+// Check the preprocessor and platform:
+// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system#OSXiOSandDarwin
+#ifndef __APPLE__
+  int owner() {
+    return mu_.__data.__owner;
+  }
+#endif
+
  private:
   friend class CondVar;
   pthread_mutex_t mu_;

@@ -13,13 +13,17 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <memory>
+#include <limits.h> 
 #include "pebblesdb/slice.h"
 #include "util/hash.h"
 #include "util/string_builder.h"
+#include "format.h"
 
 namespace leveldb {
 
 class FilterPolicy;
+const uint64_t kNotValid = ULLONG_MAX;
 
 class FileLevelFilterBuilder {
  public:
@@ -77,6 +81,22 @@ class FilterBlockReader {
  // REQUIRES: "contents" and *policy must stay live while *this is live.
   FilterBlockReader(const FilterPolicy* policy, const Slice& contents);
   bool KeyMayMatch(uint64_t block_offset, const Slice& key);
+    // huanchen
+  // virtual Slice Seek(const Slice& key, unsigned* bitlen, const bool inclusive,
+	// 	     uint64_t block_offset = kNotValid,
+	// 	     const bool no_io = false,
+	// 	     const Slice* const const_ikey_ptr = nullptr) {
+  //     return Slice();
+  // }
+
+  // // huanchen
+  // virtual Slice SeekForPrev(const Slice& key, unsigned* bitlen, const bool inclusive,
+	// 		    uint64_t block_offset = kNotValid,
+	// 		    const bool no_io = false,
+	// 		    const Slice* const const_ikey_ptr = nullptr) {
+  //     return Slice();
+  // }
+
 
  private:
   const FilterPolicy* policy_;

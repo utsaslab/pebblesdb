@@ -34,6 +34,7 @@ class BloomFilterPolicy : public FilterPolicy {
   }
 
   virtual void CreateFilter(const Slice* keys, int n, std::string* dst) const {
+  //  printf("bloom filter create\n");
     // Compute bloom filter size (in both bits and bytes)
     size_t bits = n * bits_per_key_;
 

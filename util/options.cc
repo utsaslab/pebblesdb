@@ -7,7 +7,8 @@
 #include "pebblesdb/comparator.h"
 #include "pebblesdb/env.h"
 
-namespace leveldb {
+namespace leveldb
+{
 
 Options::Options()
     : comparator(BytewiseComparator()),
@@ -16,15 +17,16 @@ Options::Options()
       paranoid_checks(false),
       env(Env::Default()),
       info_log(NULL),
-      write_buffer_size(4<<20),
+      write_buffer_size(4 << 20),
       max_open_files(1000),
       block_cache(NULL),
       block_size(4096),
       block_restart_interval(16),
       compression(kNoCompression),
       filter_policy(NULL),
-      manual_garbage_collection(false) {
+      manual_garbage_collection(false),
+      parallel_guard_compaction(true)
+{
 }
-
 
 }  // namespace leveldb
