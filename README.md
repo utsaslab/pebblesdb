@@ -50,7 +50,7 @@ PebblesDB was built, compiled, and tested with g++-4.7, g++-4.9, and g++-5. It m
 
 Using Autotools:
 
-```shell
+```
 $ cd pebblesdb/src
 $ autoreconf -i
 $ ./configure
@@ -142,7 +142,7 @@ ___
 
 The following improvements are made to the codebase after the SOSP paper:
 
-- Add CMake build system support
+- Add CMake build system support (by @xxks-kkk)
 
 
 ---
