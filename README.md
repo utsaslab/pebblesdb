@@ -48,7 +48,7 @@ PebblesDB was built, compiled, and tested with g++-4.7, g++-4.9, and g++-5. It m
 
 ### Installation
 
-Using autotools:
+Using Autotools:
 
 ```shell
 $ cd pebblesdb/src
@@ -59,11 +59,11 @@ $ make install
 $ ldconfig
 ```
 
-Using cmake:
+Using CMake:
 
 ```shell
 $ mkdir -p build && cd build
-$ cmake -DPEBBLESDB_INSTALL=1 .. && cmake --build .
+$ cmake .. && make install -j16
 ```
 
 ___

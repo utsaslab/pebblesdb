@@ -17,10 +17,8 @@ option(PEBBLESDB_BUILD_TESTS "Build PeblesDB's unit tests" ON)
 # Setup the basic C++ Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-variadic-macros")
 
-# /Users/zeyuan/Documents/projects/HyperPebblesDB-test
 message(STATUS "CMAKE_SOURCE_DIR:    " ${CMAKE_SOURCE_DIR})
 
-# /Users/zeyuan/Documents/projects/HyperPebblesDB-test/src/
 set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 message(STATUS "PROJECT_SOURCE_DIR:  " ${PROJECT_SOURCE_DIR})
 
@@ -47,7 +45,7 @@ check_include_file("endian.h" HAVE_ENDIAN_H)
 check_include_file("machine/endian.h" HAVE_MACHINE_ENDIAN_H)
 check_include_file("sys/endian.h" HAVE_SYS_ENDIAN_H)
 check_include_file("sys/isa_defs.h" HAVE_SYS_ISA_DEFS_H)
-check_include_file("sys/types.h" HAVE_SYS_TYPES_H) #TODO: the variable name is not right in the port/port_posix.h
+check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
 check_include_file("inttypes.h" HAVE_INTTYPES_H)
 check_include_file("memory.h" HAVE_MEMORY_H)
@@ -160,10 +158,6 @@ find_package(Threads REQUIRED)
 target_link_libraries(pebblesdb Threads::Threads)
 
 message(STATUS "C++ flags:    " ${CMAKE_CXX_FLAGS})
-
-if (PEBBLESDB_INSTALL)
-    message("Install HyperPebblesDB")
-endif (PEBBLESDB_INSTALL)
 
 if (PEBBLESDB_BUILD_TESTS)
     enable_testing()
