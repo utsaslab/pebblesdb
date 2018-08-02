@@ -1,0 +1,141 @@
+/* Define to 1 if you have the `alarm' function. */
+#cmakedefine HAVE_ALARM
+
+/* Define to 1 if you have the `clock_gettime' function. */
+#cmakedefine HAVE_CLOCK_GETTIME
+
+/* Define to 1 if you have the declaration of `fdatasync', and to 0 if you
+   don't. */
+#cmakedefine01 HAVE_DECL_FDATASYNC
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#cmakedefine HAVE_DLFCN_H
+
+/* Define to 1 if you have the <endian.h> header file. */
+#cmakedefine HAVE_ENDIAN_H
+
+/* Define to 1 if you have the `fflush' function. */
+#cmakedefine01 HAVE_FFLUSH
+
+/* Define to 1 if you have the `fflush_unlocked' function. */
+#cmakedefine HAVE_FFLUSH_UNLOCKED
+
+/* Define to 1 if you have the `fread' function. */
+#cmakedefine01 HAVE_FREAD
+
+/* Define to 1 if you have the `fread_unlocked' function. */
+#cmakedefine HAVE_FREAD_UNLOCKED
+
+/* Define to 1 if you have the `fsync' function. */
+#cmakedefine01 HAVE_FSYNC
+
+/* Define to 1 if you have the `ftruncate' function. */
+#cmakedefine HAVE_FTRUNCATE
+
+/* Define to 1 if you have the `fwrite' function. */
+#cmakedefine01 HAVE_FWRITE
+
+/* Define to 1 if you have the `fwrite_unlocked' function. */
+#cmakedefine HAVE_FWRITE_UNLOCKED
+
+/* Define to 1 if you have the `getpagesize' function. */
+#cmakedefine HAVE_GETPAGESIZE
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <machine/endian.h> header file. */
+#cmakedefine HAVE_MACHINE_ENDIAN_H
+
+/* Define to 1 if you have the `mach_absolute_time' function. */
+#cmakedefine HAVE_MACH_ABSOLUTE_TIME
+
+/* Define to 1 if you have the `memmove' function. */
+#cmakedefine HAVE_MEMMOVE
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mkdir' function. */
+#cmakedefine HAVE_MKDIR
+
+/* Define to 1 if you have a working `mmap' system call. */
+#cmakedefine HAVE_MMAP
+
+/* Define to 1 if you have the `munmap' function. */
+#cmakedefine HAVE_MUNMAP
+
+/* Define to 1 if you have the `rmdir' function. */
+#cmakedefine HAVE_RMDIR
+
+/* Define to 1 if you have the `socket' function. */
+#cmakedefine HAVE_SOCKET
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/endian.h> header file. */
+#cmakedefine HAVE_SYS_ENDIAN_H
+
+/* Define to 1 if you have the <sys/isa_defs.h> header file. */
+#cmakedefine HAVE_SYS_ISA_DEFS_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#cmakedefine HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#cmakedefine LT_OBJDIR
+
+/* 'Disable debug' */
+#cmakedefine NDEBUG
+
+/* Name of package */
+#cmakedefine PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#cmakedefine PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#cmakedefine PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#cmakedefine PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#cmakedefine PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#cmakedefine PACKAGE_URL
+
+/* Define to the version of this package. */
+#cmakedefine PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#cmakedefine STDC_HEADERS
+
+/* 'Start timer log' */
+#cmakedefine TIMER_LOG
+
+/* Version number of package */
+#cmakedefine VERSION
+
+/* 'Disable Mac-incompatible trace function' */
+#cmakedefine __APPLE__

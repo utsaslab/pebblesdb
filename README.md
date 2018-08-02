@@ -47,17 +47,29 @@ PebblesDB requires `libsnappy` and `libtool`. To install on Linux, please use
 PebblesDB was built, compiled, and tested with g++-4.7, g++-4.9, and g++-5. It may not work with other versions of g++ and other C++ compilers. 
 
 ### Installation
-`$ cd pebblesdb/`  
-`$ autoreconf -i`  
-`$ ./configure`  
-`$ make`  
-`# make install`  
-`# ldconfig`  
+
+Using Autotools:
+
+```
+$ cd pebblesdb/src
+$ autoreconf -i
+$ ./configure
+$ make
+$ make install
+$ ldconfig
+```
+
+Using CMake:
+
+```shell
+$ mkdir -p build && cd build
+$ cmake .. && make install -j16
+```
 
 ___
 
 ### Running microbenchmark
-1. `cd pebblesdb/`  
+1. `cd pebblesdb/src/`
 2. `make db_bench`  
 3. `./db_bench --benchmarks=<list-of-benchmarks> --num=<number-of-keys> --value_size=<size-of-value-in-bytes> --reads=<number-of-reads> --db=<database-directory-path>`  
 A complete set of parameters can be found in `db/db_bench.cc`  
@@ -124,6 +136,14 @@ ___
 * This parameter can be set in `db/dbformat.h` (default value:
   2). Setting this parameter high will favor write throughput while
   setting it lower will favor read/seek throughputs.
+
+---
+### Improvements made after the SOSP paper
+
+The following improvements are made to the codebase after the SOSP paper:
+
+- Add CMake build system support (by @xxks-kkk)
+
 
 ---
 ### Contact

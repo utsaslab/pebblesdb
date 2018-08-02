@@ -67,3 +67,16 @@
 /Makefile.old
 /missing
 /stamp-h1
+config.h*
+
+.idea/
+.vscode/
+cmake-build-debug/
+testPebblesDB
+gdb.txt
+.autotools
+.cproject
+.project
+.settings/
+nbproject/
+CMakeFiles
