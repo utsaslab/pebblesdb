@@ -39,7 +39,7 @@ Seek operation and no next operations following.
 * **Deletes:** In LSM stores, deletes are similar to writes except that we insert only the key with a deletion flag. Hence, 
 PebblesDB achieves the same throughput gain as Random-Writes. 
 
-![Micro-benchmarks](https://github.com/utsaslab/pebblesdb/blob/master/graphs/micro-all.png)
+![Micro-benchmarks](https://github.com/utsaslab/pebblesdb/blob/master/src/graphs/micro-all.png)
 <p align="center"> Figure 1 - Micro-benchmarks </p>
 
 #### Multi-threaded micro-benchmarks
@@ -62,7 +62,7 @@ ___
 ### YCSB Benchmark
 [YCSB](https://github.com/brianfrankcooper/YCSB) is an industry-standard, widely used open source benchmark for NoSQL stores. We evaluate the different key-values stores using the YCSB benchmark suite. We inserted 50M key-value pairs (using 4 threads) with value size 1 KB totaling to around 52 GB of user data. Around 10M reads were performed for the other workloads.  
 
-![YCSB-benchmark](https://github.com/utsaslab/pebblesdb/blob/master/graphs/multi-ycsb.png)
+![YCSB-benchmark](https://github.com/utsaslab/pebblesdb/blob/master/src/graphs/multi-ycsb.png)
 
 *Figure 2 - YCSB Benchmark*
 
@@ -80,13 +80,13 @@ We insert 20M key-value pairs with value size 1 KB and do 10M operations (reads)
 
 * Figure 3 shows the results of YCSB Benchmark on HyperDex. We see that PebblesDB still performs better in comparison to HyperLevelDB for write workload and has comparable performance for read throughput. But the amount of gain in write throughput has decreased compared to the benchmark on the key-value store itself. The reason is that HyperDex itself adds some latency to each write operation and also before each write, it does a read to check if the key is already present. This amortizes the overall time taken to write an entry and hence PebblesDB is not utilized to its maximum extent. 
 
-![HyperDex-YCSB](https://github.com/utsaslab/pebblesdb/blob/master/graphs/hyperdex-multi.png)
+![HyperDex-YCSB](https://github.com/utsaslab/pebblesdb/blob/master/src/graphs/hyperdex-multi.png)
 
 *Figure 3 - YCSB Benchmark on HyperDex*
 
 * Figure 4 shows the results of YCSB benchmark on MongoDB. We evaluate MongoDB on PebblesDB, RocksDB and WiredTiger. We see that PebblesDB has better write throughput and comparable read throughput overall and at the same time, doing lesser write IO compared to RocksDB. Similar to HyperDex, the gain in write throughput has come down due to similar reasons (application latency and read-write behavior). We believe the applications can be modified in order to make the best possible use of PebblesDB exploiting the high write throughput it provides. 
 
-![MongoDB-YCSB](https://github.com/utsaslab/pebblesdb/blob/master/graphs/mongo.png)
+![MongoDB-YCSB](https://github.com/utsaslab/pebblesdb/blob/master/src/graphs/mongo.png)
 
 *Figure 4 - YCSB Benchmark on MongoDB*
 
