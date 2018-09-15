@@ -1,0 +1,52 @@
+# Build matrix / environment variable are explained on:
+# http://about.travis-ci.org/docs/user/build-configuration/
+# This file can be validated on: http://lint.travis-ci.org/
+
+sudo: false
+dist: trusty
+language: cpp
+
+compiler:
+  - gcc
+
+os:
+  - linux
+  - osx
+
+git:
+  submodules: false
+
+addons:
+  apt:
+      # List of whitelisted in travis packages for ubuntu-trusty can be found here:
+      #   https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-trusty
+      # List of whitelisted in travis apt-sources:
+      #   https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
+      sources:
+      - ubuntu-toolchain-r-test
+      packages:
+      - g++-5
+      - libsnappy-dev
+      - libtool
+
+install:
+
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+    brew update;
+    if [ -L /usr/local/include/c++ ]; then rm /usr/local/include/c++; fi;
+    brew install gcc@5;
+    brew install snappy;
+  fi
+
+# /usr/bin/gcc is stuck to old versions on both Linux and OSX.
+- if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
+- echo ${CXX}
+- ${CXX} --version
+
+before_script:
+- cmake . 
+
+script:
+# `make all` still break
+- make db_test
+- ./db_test
