@@ -1,5 +1,7 @@
 ## PebblesDB
 
+[![Build Status](https://travis-ci.org/utsaslab/pebblesdb.svg?branch=master)](https://travis-ci.org/utsaslab/pebblesdb)
+
 PebblesDB is a write-optimized key-value store which is built using
 the novel FLSM (Fragmented Log-Structured Merge Tree) data
 structure. FLSM is a modification of the standard log-structured merge tree data structure which
