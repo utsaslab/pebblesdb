@@ -44,7 +44,6 @@ install:
 - ${CXX} --version
 
 before_script:
-- cd ..
 - cmake . -DCMAKE_CXX_COMPILER=${CXX} -DNDEBUG=1
 
 script:
