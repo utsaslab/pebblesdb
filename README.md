@@ -1,6 +1,7 @@
 ## PebblesDB
 
 [![Build Status](https://travis-ci.org/utsaslab/pebblesdb.svg?branch=master)](https://travis-ci.org/utsaslab/pebblesdb)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 PebblesDB is a write-optimized key-value store which is built using
 the novel FLSM (Fragmented Log-Structured Merge Tree) data
