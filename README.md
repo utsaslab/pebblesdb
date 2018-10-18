@@ -141,11 +141,20 @@ ___
   setting it lower will favor read/seek throughputs.
 
 ---
+### Running YCSB Benchmarks
+
+The Java Native Interface wrapper to PebblesDB is available [here](https://github.com/utsaslab/leveldbjni).
+Please follow the instructions specified under *Running YCSB Workloads with PebblesDB* section for running the YCSB benchmarks.
+
+The YCSB bindings for PebblesDB can be found [here](https://github.com/utsaslab/YCSB/tree/master/pebblesdb).
+
+---
 ### Improvements made after the SOSP paper
 
 The following improvements are made to the codebase after the SOSP paper:
 
 - Add CMake build system support (by @xxks-kkk)
+- Add JNI Wrapper and support for running YCSB benchmarks (by @abhijith97)
 
 
 ---
