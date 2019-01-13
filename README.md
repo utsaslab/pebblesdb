@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/utsaslab/pebblesdb.svg?branch=master)](https://travis-ci.org/utsaslab/pebblesdb)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-PebblesDB is a write-optimized key-value store which is built using
+[PebblesDB](https://github.com/utsaslab/pebblesdb) is a write-optimized key-value store which is built using
 the novel FLSM (Fragmented Log-Structured Merge Tree) data
 structure. FLSM is a modification of the standard log-structured merge tree data structure which
 aims at achieving higher write throughput and lower write
@@ -14,7 +14,7 @@ PebblesDB is built by modifying
 is built on top of
 [LevelDB](https://github.com/google/leveldb). PebblesDB is API
 compatible with HyperLevelDB and LevelDB. Thus, PebblesDB is a
-*drop-in* replacement for LevelDB and HyperLevelDB. The full paper on
+*drop-in* replacement for LevelDB and HyperLevelDB. The source code is available on [Github](https://github.com/utsaslab/pebblesdb). The full paper on
 PebblesDB can be found
 [here](http://www.cs.utexas.edu/~vijay/papers/sosp17-pebblesdb.pdf
 "PebblesDB SOSP'17"). The slides for the SOSP 17 talk, which explains the core ideas behind PebblesDB, can be found [here](http://www.cs.utexas.edu/~vijay/papers/pebblesdb-sosp17-slides.pdf). 
