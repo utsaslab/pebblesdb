@@ -25,6 +25,8 @@
 #include "db/murmurhash3.h"
 #include <inttypes.h>
 
+#include <iostream>
+
 #ifdef TIMER_LOG_SEEK
 	#define vvstart_timer(s) vset->timer->StartTimer(s)
 	#define vvrecord_timer(s) vset->timer->Record(s)
@@ -2184,6 +2186,45 @@ void VersionSet::PopulateFileLevelBloomFilter() {
 #endif
 }
 
+long VersionSet::MemoryUsage () {
+   long s = -1;
+   FILE *f = fopen("/proc/self/statm", "r");
+   if (!f) return -1;
+   // if for any reason the fscanf fails, s is still -1,
+   //      with errno appropriately set.
+   fscanf(f, "%ld", &s);
+   fclose (f);
+   return s * getpagesize();
+}
+
+
+
+void VersionSet::FreeMemory() {
+    if (MemoryUsage() <= 25000) 
+        fprintf(stderr, "Mem usage less\n");
+        return;
+
+    Version* current = current_;
+    current->Ref();
+    fprintf(stderr, "Levels: %d\n", config::kNumLevels);
+    for (int i = 0; i < config::kNumLevels && MemoryUsage() >= 25000; i++) {
+        for (int j = 0; j < current->files_[i].size(); j++) {
+            if (!current->files_[i][j]) {
+                fprintf(stderr, "No file\n");
+            } 
+            if(current->files_[i][j] && MemoryUsage() >= 25000) {
+                fprintf(stderr, "Removing bloom Filter\n");
+                uint64_t file_number = current->files_[i][j]->number;
+                RemoveFileLevelBloomFilterInfo(file_number);
+            }
+            if (MemoryUsage() <= 25000) {
+                fprintf(stderr, "Mem usage less\n");
+                return;
+        }
+        }
+    }        
+}
+
 void VersionSet::PopulateBloomFilterForFile(FileMetaData* file, FileLevelFilterBuilder* file_level_filter_builder) {
 	uint64_t file_number = file->number;
 	uint64_t file_size = file->file_size;
@@ -2233,8 +2274,10 @@ void VersionSet::InitializeTableCacheFileMetaData() {
 void VersionSet::AddFileLevelBloomFilterInfo(uint64_t file_number, std::string* filter_string) {
 #ifdef FILE_LEVEL_FILTER
 	file_level_bloom_filter[file_number] = filter_string;
+        FreeMemory();
 #endif
 }
+
 void VersionSet::RemoveFileLevelBloomFilterInfo(uint64_t file_number) {
 #ifdef FILE_LEVEL_FILTER
 	std::string* filter = file_level_bloom_filter[file_number];

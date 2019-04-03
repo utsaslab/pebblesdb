@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <fstream>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -280,6 +281,8 @@ class Stats {
       else if (next_report_ < 500000) next_report_ += 50000;
       else                            next_report_ += 100000;
       fprintf(stderr, "... finished %d ops%30s\r", done_, "");
+      long mem = VersionSet::MemoryUsage();
+      fprintf(stderr, "Bytes: %ld,    MB: %ld,    GB: %ld", mem, mem/1000000, mem/1000000000);
       fflush(stderr);
     }
   }

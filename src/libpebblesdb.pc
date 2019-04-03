@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: PebblesDB
+Description: A fast and lightweight key-value storage library
+Version: 1.0.dev
+
+Requires:
+Libs: -L${libdir} -lpebblesdb
+Cflags: -I${includedir}
