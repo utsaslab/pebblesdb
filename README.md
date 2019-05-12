@@ -73,7 +73,7 @@ ___
 
 ### Running microbenchmark
 1. `cd pebblesdb/src/`
-2. `make db_bench`  
+2. `make db_bench`  (this only works if you are compiling using autotools, and have done `autoreconf` and `configure` before this step)
 3. `./db_bench --benchmarks=<list-of-benchmarks> --num=<number-of-keys> --value_size=<size-of-value-in-bytes> --reads=<number-of-reads> --db=<database-directory-path>`  
 A complete set of parameters can be found in `db/db_bench.cc`  
 
