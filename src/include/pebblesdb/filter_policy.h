@@ -47,6 +47,9 @@ class FilterPolicy {
   // This method may return true or false if the key was not on the
   // list, but it should aim to return false with a high probability.
   virtual bool KeyMayMatch(const Slice& key, const Slice& filter) const = 0;
+
+  // accounting the in-memory usage for the filter.
+  mutable size_t byte_size;
 };
 
 // Return a new filter policy that uses a bloom filter with approximately

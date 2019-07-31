@@ -495,6 +495,13 @@ class Benchmark {
     Open();
   }
 
+  void PrintFilterStats()
+  {
+    size_t filter_size_bytes = filter_policy_->byte_size;
+    float filter_size_mb = (float) filter_size_bytes / (1024 * 1024);
+    printf("Filter in-memory size %zu bytes or %.3f MB\n", filter_size_bytes, filter_size_mb);
+  }
+
   struct trace_operation_t {
   	char cmd;
   	unsigned long long key;
@@ -1646,5 +1653,7 @@ int main(int argc, char** argv) {
 
   leveldb::Benchmark benchmark;
   benchmark.Run();
+  //print the in-memory usage by bloom filter
+  benchmark.PrintFilterStats();
   return 0;
 }
