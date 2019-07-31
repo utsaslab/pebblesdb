@@ -499,7 +499,8 @@ class Benchmark {
   {
     size_t filter_size_bytes = filter_policy_->byte_size;
     float filter_size_mb = (float) filter_size_bytes / (1024 * 1024);
-    printf("Filter in-memory size %zu bytes or %.3f MB\n", filter_size_bytes, filter_size_mb);
+    printf("Filter in-memory size: %.3f MB\n", filter_size_mb);
+    printf("Count of filters: %lu \n", filter_policy_->filter_count);
   }
 
   struct trace_operation_t {

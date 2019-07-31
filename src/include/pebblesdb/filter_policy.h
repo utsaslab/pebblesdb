@@ -50,6 +50,7 @@ class FilterPolicy {
 
   // accounting the in-memory usage for the filter.
   mutable size_t byte_size;
+  mutable unsigned long filter_count;
 };
 
 // Return a new filter policy that uses a bloom filter with approximately
