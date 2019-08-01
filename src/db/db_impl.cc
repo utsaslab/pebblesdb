@@ -186,6 +186,7 @@ DBImpl::DBImpl(const Options& raw_options, const std::string& dbname)
     : env_(raw_options.env),
       internal_comparator_(raw_options.comparator),
       internal_filter_policy_(raw_options.filter_policy),
+      filter_policy_(raw_options.filter_policy),
       options_(SanitizeOptions(dbname, &internal_comparator_,
                                &internal_filter_policy_, raw_options)),
       owns_info_log_(options_.info_log != raw_options.info_log),
@@ -2258,6 +2259,17 @@ bool DBImpl::GetProperty(const Slice& property, std::string* value) {
     return true;
   } else if (in == "sstables") {
     *value = versions_->current()->DebugString();
+    return true;
+  } else if (in == "filter") {
+    char buf[80];
+    size_t filter_size_bytes = filter_policy_->byte_size;
+    float filter_size_mb = (float) filter_size_bytes / (1024 * 1024);
+    snprintf(buf, sizeof(buf),
+            "Filter in-memory size: %.3f MB\n"
+            "Count of filters: %lu \n",
+            filter_size_mb,
+            filter_policy_->filter_count);
+    value->append(buf);
     return true;
   }
 

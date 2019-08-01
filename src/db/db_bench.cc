@@ -84,6 +84,7 @@ static const char* FLAGS_benchmarks =
     "snappycomp,"
     "snappyuncomp,"
     "acquireload,"
+    "filter,"
     ;
 
 // Number of key/values to place in database
@@ -493,14 +494,6 @@ class Benchmark {
 	}
     db_ = NULL;
     Open();
-  }
-
-  void PrintFilterStats()
-  {
-    size_t filter_size_bytes = filter_policy_->byte_size;
-    float filter_size_mb = (float) filter_size_bytes / (1024 * 1024);
-    printf("Filter in-memory size: %.3f MB\n", filter_size_mb);
-    printf("Count of filters: %lu \n", filter_policy_->filter_count);
   }
 
   struct trace_operation_t {
@@ -955,7 +948,10 @@ class Benchmark {
       } else if (name == Slice("printdb")) {
     	fresh_db = false;
     	method = &Benchmark::PrintDB;
-      } else {
+      } else if (name == Slice("filter")) {
+        PrintStats("leveldb.filter");
+      }
+      else {
         if (name != Slice()) {  // No error message for empty name
           fprintf(stderr, "unknown benchmark '%s'\n", name.ToString().c_str());
         }
@@ -1654,7 +1650,5 @@ int main(int argc, char** argv) {
 
   leveldb::Benchmark benchmark;
   benchmark.Run();
-  //print the in-memory usage by bloom filter
-  benchmark.PrintFilterStats();
   return 0;
 }
