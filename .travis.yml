@@ -30,13 +30,13 @@ addons:
       - libtool
 
 before_install:
-- if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+- if [ "$TRAVIS_OS_NAME" != "mac os x" ]; then
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157;
   fi
 
 install:
 
-- if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+- if [ "$TRAVIS_OS_NAME" == "mac os x" ]; then
     brew update;
     if [ -L /usr/local/include/c++ ]; then rm /usr/local/include/c++; fi;
     brew install gcc@5;
