@@ -30,6 +30,7 @@ addons:
       - libtool
 
 before_install:
+echo $TRAVIS_OS_NAME
 - if [ "$TRAVIS_OS_NAME" != "mac os x" ]; then
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157;
   fi
