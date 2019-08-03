@@ -31,7 +31,7 @@ addons:
 
 before_install:
 - if [ "$TRAVIS_OS_NAME" != "osx" ]; then
-    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157;
   fi
 
 install:
