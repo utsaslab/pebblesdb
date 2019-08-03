@@ -166,8 +166,9 @@ The YCSB bindings for PebblesDB can be found [here](https://github.com/utsaslab/
 
 The following improvements are made to the codebase after the SOSP paper:
 
-- Add CMake build system support (by @xxks-kkk)
-- Add JNI Wrapper and support for running YCSB benchmarks (by @abhijith97)
+- Add CMake build system support (Zeyuan Hu @xxks-kkk)
+- Add JNI Wrapper and support for running YCSB benchmarks (Abhijith Nair @abhijith97)
+- Accounting for memory used by bloom filters (Karuna Grewal @aakp10)
 
 
 ---
