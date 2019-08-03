@@ -84,6 +84,7 @@ static const char* FLAGS_benchmarks =
     "snappycomp,"
     "snappyuncomp,"
     "acquireload,"
+    "filter,"
     ;
 
 // Number of key/values to place in database
@@ -947,7 +948,10 @@ class Benchmark {
       } else if (name == Slice("printdb")) {
     	fresh_db = false;
     	method = &Benchmark::PrintDB;
-      } else {
+      } else if (name == Slice("filter")) {
+        PrintStats("leveldb.filter");
+      }
+      else {
         if (name != Slice()) {  // No error message for empty name
           fprintf(stderr, "unknown benchmark '%s'\n", name.ToString().c_str());
         }

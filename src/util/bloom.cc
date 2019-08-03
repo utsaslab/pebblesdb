@@ -27,6 +27,8 @@ class BloomFilterPolicy : public FilterPolicy {
     // We intentionally round down to reduce probing cost a little bit
     if (k_ < 1) k_ = 1;
     if (k_ > 30) k_ = 30;
+    byte_size = 0;
+    filter_count = 0;
   }
 
   virtual const char* Name() const {
@@ -35,6 +37,7 @@ class BloomFilterPolicy : public FilterPolicy {
 
   virtual void CreateFilter(const Slice* keys, int n, std::string* dst) const {
     // Compute bloom filter size (in both bits and bytes)
+    filter_count++;
     size_t bits = n * bits_per_key_;
 
     // For small n, we can see a very high false positive rate.  Fix it
@@ -46,7 +49,7 @@ class BloomFilterPolicy : public FilterPolicy {
 //    if (n > 200) {
 //    	printf("Bloom create filter called. n: %d bytes: %d\n", n, bytes);
 //    }
-
+    byte_size += bytes;
     const size_t init_size = dst->size();
     dst->resize(init_size + bytes, 0);
     dst->push_back(static_cast<char>(k_));  // Remember # of probes in filter
