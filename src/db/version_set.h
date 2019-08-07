@@ -27,6 +27,7 @@
 #include "db/table_cache.h"
 #include "table/iterator_wrapper.h"
 #include "table/filter_block.h"
+#include <unistd.h>
 
 //#define READ_PARALLEL
 //#define SEEK_PARALLEL
@@ -214,7 +215,7 @@ class Version {
   size_t NumFiles(unsigned level) const { return files_[level].size(); }
 
   size_t NumGuards(unsigned level) const { return guards_[level].size(); }
-
+  
   size_t NumGuardFiles(unsigned level) const {
     assert(level < config::kNumLevels);
     int num_guard_files = 0;
@@ -462,6 +463,8 @@ class VersionSet {
              const InternalKeyComparator*,
 			 Timer* timer);
   ~VersionSet();
+    
+  static long MemoryUsage();
 
 #ifdef SEEK_PARALLEL
   static void ConcurrentSeekWrapper(void* vset) {
@@ -844,8 +847,9 @@ class VersionSet {
   Status WriteSnapshot(log::Writer* log);
 
   void AppendVersion(Version* v);
+  void FreeMemory();
   void PopulateFileLevelBloomFilter();
-  void PopulateBloomFilterForFile(FileMetaData* file, FileLevelFilterBuilder* file_level_filter_builder);
+    void PopulateBloomFilterForFile(FileMetaData* file, FileLevelFilterBuilder* file_level_filter_builder);
 
   Env* const env_;
   const std::string dbname_;
