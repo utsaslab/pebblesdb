@@ -1,0 +1,15 @@
+/usr/local/lib/libpebblesdb.a
+/usr/local/include/pebblesdb/c.h
+/usr/local/include/pebblesdb/cache.h
+/usr/local/include/pebblesdb/comparator.h
+/usr/local/include/pebblesdb/db.h
+/usr/local/include/pebblesdb/env.h
+/usr/local/include/pebblesdb/filter_policy.h
+/usr/local/include/pebblesdb/iterator.h
+/usr/local/include/pebblesdb/options.h
+/usr/local/include/pebblesdb/slice.h
+/usr/local/include/pebblesdb/replay_iterator.h
+/usr/local/include/pebblesdb/status.h
+/usr/local/include/pebblesdb/table_builder.h
+/usr/local/include/pebblesdb/table.h
+/usr/local/include/pebblesdb/write_batch.h

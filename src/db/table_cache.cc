@@ -160,17 +160,17 @@ Status TableCache::Get(const ReadOptions& options,
   Cache::Handle* handle = NULL;
   Status s;
   start_timer(GET_TABLE_CACHE_FIND_TABLE);
-  s = FindTable(file_number, file_size, &handle, timer);
+  s = FindTable(file_number, file_size, &handle, timer); // 查询对应的table，首先查找缓存，没有的话就从盘上加载到缓存
 //  printf("After finding table. \n");
   record_timer(GET_TABLE_CACHE_FIND_TABLE);
   if (s.ok()) {
     start_timer(GET_TABLE_CACHE_INTERNAL_GET);
-    Table* t = reinterpret_cast<TableAndFile*>(cache_->Value(handle))->table;
+    Table* t = reinterpret_cast<TableAndFile*>(cache_->Value(handle))->table; // 从缓存中取出 Table
 //    printf("Doing an InternalGet for key from Table.\n");
 //    printf("Calling table->InternalGet. \n");
-    s = t->InternalGet(options, k, arg, saver, timer);
+    s = t->InternalGet(options, k, arg, saver, timer); // Table 内部执行查询
 //    printf("Releasing cache->handle.\n");
-    cache_->Release(handle);
+    cache_->Release(handle); // 释放缓存句柄
     record_timer(GET_TABLE_CACHE_INTERNAL_GET);
   }
   return s;

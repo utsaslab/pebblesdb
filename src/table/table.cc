@@ -271,9 +271,9 @@ Status Table::InternalGet(const ReadOptions& options, const Slice& k,
                           void (*saver)(void*, const Slice&, const Slice&),
 						  Timer* timer) {
   Status s;
-  Iterator* iiter = rep_->index_block->NewIterator(rep_->options.comparator);
+  Iterator* iiter = rep_->index_block->NewIterator(rep_->options.comparator); // 创建索引块的迭代器
   start_timer(GET_TABLE_CACHE_INDEX_ITER_SEEK);
-  iiter->Seek(k);
+  iiter->Seek(k); // 定位到指定的位置
   record_timer(GET_TABLE_CACHE_INDEX_ITER_SEEK);
 
   if (iiter->Valid()) {
@@ -286,19 +286,21 @@ Status Table::InternalGet(const ReadOptions& options, const Slice& k,
 #ifdef FILE_LEVEL_FILTER
     file_level_filter_enabled = true;
 #endif
+    // 如果没有使用 file_level_filter，就使用原来的 block 的 filter 
     if (file_level_filter_enabled == false && filter != NULL &&
         handle.DecodeFrom(&handle_value).ok() &&
         !filter->KeyMayMatch(handle.offset(), k)) {
     	record_timer(GET_TABLE_CACHE_FILTER_CHECK);
       // Not found
     } else {
+      // 因为用了 file level 的 filter，所以直接读取数据块
       record_timer(GET_TABLE_CACHE_FILTER_CHECK);
 
       start_timer(GET_TABLE_CACHE_READ_DATA_BLOCK);
-      Iterator* block_iter = BlockReader(this, options, iiter->value());
-      block_iter->Seek(k);
+      Iterator* block_iter = BlockReader(this, options, iiter->value()); // 解析出对应的数据块
+      block_iter->Seek(k); // 定位到指定的位置
       if (block_iter->Valid()) {
-        (*saver)(arg, block_iter->key(), block_iter->value());
+        (*saver)(arg, block_iter->key(), block_iter->value()); // 取出数据
       }
       s = block_iter->status();
       delete block_iter;

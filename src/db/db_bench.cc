@@ -462,7 +462,7 @@ class Benchmark {
   : cache_(FLAGS_cache_size >= 0 ? NewLRUCache(FLAGS_cache_size) : NULL),
     filter_policy_(FLAGS_bloom_bits >= 0
                    ? NewBloomFilterPolicy(FLAGS_bloom_bits)
-                   : NULL),
+                   : NULL),  // 创造 cache 和 bloomfilter
     db_(NULL),
     num_(FLAGS_num),
     value_size_(FLAGS_value_size),
@@ -808,7 +808,7 @@ class Benchmark {
 		bytes += value_size_ + strlen(key);
 		thread->stats.FinishedSingleOp();
 	  }
-	  s = db_->Write(write_options_, &batch);
+	  s = db_->Write(write_options_, &batch); // 随机写入数据
 	  outfile << key << std::endl;
 	  if (!s.ok()) {
 		fprintf(stderr, "put error: %s\n", s.ToString().c_str());
@@ -824,12 +824,12 @@ class Benchmark {
     Open();
 
     const char* benchmarks = FLAGS_benchmarks;
-    int num_write_threads = FLAGS_write_threads;
-    int num_read_threads = FLAGS_read_threads;
-    int num_threads = FLAGS_threads;
+    int num_write_threads = FLAGS_write_threads; // 默认为 1
+    int num_read_threads = FLAGS_read_threads; // 默认为 1
+    int num_threads = FLAGS_threads; // 默认为 1
 
     while (benchmarks != NULL) {
-      const char* sep = strchr(benchmarks, ',');
+      const char* sep = strchr(benchmarks, ','); // 循环解析 benchmarks 参数
       Slice name;
       if (sep == NULL) {
         name = benchmarks;
@@ -851,105 +851,105 @@ class Benchmark {
       int num_threads = FLAGS_threads;
 
       if (name ==  Slice("ycsb")) {
-    	  method = &Benchmark::YCSB;
+    	  method = &Benchmark::YCSB; // 执行 YCSB 测试
       } else if (name == Slice("fillseq")) {
-        fresh_db = true;
+        fresh_db = true; // 执行 fillseq 测试，重新创建数据库
         method = &Benchmark::WriteSeq;
       } else if (name == Slice("fillbatch")) {
-        fresh_db = true;
+        fresh_db = true; // 执行 fillbatch 测试，重新创建数据库
         entries_per_batch_ = 1000;
         method = &Benchmark::WriteSeq;
       } else if (name == Slice("rel_start")) {
 //        fresh_db = true;
 //        entries_per_batch_ = 1000;
-        method = &Benchmark::ReliabilityStart;
+        method = &Benchmark::ReliabilityStart; // 执行 rel_start 测试，随机插入数据，并记录在文件中
       } else if (name == Slice("rel_check")) {
 //        fresh_db = true;
 //        entries_per_batch_ = 1000;
-        method = &Benchmark::ReliabilityCheck;
+        method = &Benchmark::ReliabilityCheck; // 执行 rel_check 测试，检查数据是否存在，和文件中的数据比对
       } else if (name == Slice("fillrandom")) {
         fresh_db = true;
-        method = &Benchmark::WriteRandom;
+        method = &Benchmark::WriteRandom; // 执行 fillrandom 测试，随机写入数据，重新创建数据库
       } else if (name == Slice("reopen")) {
         fresh_db = false;
-        method = &Benchmark::Reopen;
+        method = &Benchmark::Reopen; // 执行 reopen 测试，重新打开数据库
       } else if (name == Slice("overwrite")) {
         fresh_db = false;
-        method = &Benchmark::WriteRandom;
+        method = &Benchmark::WriteRandom; // 执行 overwrite 测试，随机写入数据，沿用之前的数据库
       } else if (name == Slice("fillsync")) {
         fresh_db = true;
         num_ /= 1000;
         write_options_.sync = true;
-        method = &Benchmark::WriteRandom;
+        method = &Benchmark::WriteRandom; // 执行 fillsync 测试，随机同步写入数据，重新创建数据库
       } else if (name == Slice("fill100K")) {
         fresh_db = true;
         num_ /= 1000;
         value_size_ = 100 * 1000;
-        method = &Benchmark::WriteRandom;
+        method = &Benchmark::WriteRandom; // 执行 fill100K 测试，随机写入单个大小为 100K 的数据，重新创建数据库
       } else if (name == Slice("readseq")) {
-        method = &Benchmark::ReadSequential;
+        method = &Benchmark::ReadSequential; // 执行 readseq 测试，顺序读取数据 scan
       } else if (name == Slice("readreverse")) {
-        method = &Benchmark::ReadReverse;
+        method = &Benchmark::ReadReverse; // 执行 readreverse 测试，倒序读取数据 scan
       } else if (name == Slice("readrandom")) {
-        method = &Benchmark::ReadRandom;
+        method = &Benchmark::ReadRandom; // 执行 readrandom 测试，随机读取数据
       } else if (name == Slice("readmissing")) {
-        method = &Benchmark::ReadMissing;
+        method = &Benchmark::ReadMissing; // 执行 readmissing 测试，读取不存在的数据（结合 FLAGS_base_key）
       } else if (name == Slice("seekrandom")) {
-        method = &Benchmark::SeekRandom;
+        method = &Benchmark::SeekRandom;  // 执行 seekrandom 测试，随机 seek 数据
       } else if (name == Slice("scanrandom")) {
-        method = &Benchmark::ScanRandom;
+        method = &Benchmark::ScanRandom;  // 执行 scanrandom 测试，随机 scan 数据
       } else if (name == Slice("readhot")) {
-        method = &Benchmark::ReadHot;
+        method = &Benchmark::ReadHot; // 执行 readhot 测试，读取热点数据
       } else if (name == Slice("readrandomsmall")) {
         reads_ /= 1000;
-        method = &Benchmark::ReadRandom;
+        method = &Benchmark::ReadRandom; // 执行 readrandomsmall 测试，随机读取数据（小规模）
       } else if (name == Slice("deleteseq")) {
-        method = &Benchmark::DeleteSeq;
+        method = &Benchmark::DeleteSeq; // 执行 deleteseq 测试，顺序删除数据
       } else if (name == Slice("deleterandom")) {
-        method = &Benchmark::DeleteRandom;
+        method = &Benchmark::DeleteRandom; // 执行 deleterandom 测试，随机删除数据
       } else if (name == Slice("readwhilewriting")) {
-        num_threads++;  // Add extra thread for writing
+        num_threads++;  // Add extra thread for writing 单线程 0 写，多线程读
         fresh_db = false;
-        method = &Benchmark::ReadWhileWriting;
+        method = &Benchmark::ReadWhileWriting; // 执行 readwhilewriting 测试，读取并写入数据
       } else if (name == Slice("seekwhilewriting")) {
         num_threads++;  // Add extra thread for writing
-        method = &Benchmark::SeekWhileWriting;
+        method = &Benchmark::SeekWhileWriting; // 执行 seekwhilewriting 测试，seek 并写入数据
       } else if (name == Slice("compact")) {
-        method = &Benchmark::Compact;
+        method = &Benchmark::Compact; // 执行 compact 测试，压缩数据库。手动 compact
       } else if (name == Slice("crc32c")) {
-        method = &Benchmark::Crc32c;
+        method = &Benchmark::Crc32c; // 执行 crc32c 测试，计算 CRC32C 校验码
       } else if (name == Slice("acquireload")) {
-        method = &Benchmark::AcquireLoad;
+        method = &Benchmark::AcquireLoad; // 执行 acquireload 测试，计算线程并发读取数据的性能
       } else if (name == Slice("snappycomp")) {
-        method = &Benchmark::SnappyCompress;
+        method = &Benchmark::SnappyCompress; // 执行 snappycomp 测试，压缩数据
       } else if (name == Slice("snappyuncomp")) {
-        method = &Benchmark::SnappyUncompress;
+        method = &Benchmark::SnappyUncompress; // 执行 snappyuncomp 测试，解压缩数据
       } else if (name == Slice("heapprofile")) {
-        HeapProfile();
+        HeapProfile(); // 执行 heapprofile 测试，计算堆内存占用
       } else if (name == Slice("stats")) {
-        PrintStats("leveldb.stats");
+        PrintStats("leveldb.stats"); // 执行 stats 测试，输出统计信息
       } else if (name == Slice("sstables")) {
-        PrintStats("leveldb.sstables");
+        PrintStats("leveldb.sstables"); // 执行 sstables 测试，输出 sstables 信息
       } else if (name == Slice("compactsinglelevel")) {
-    	fresh_db = false;
-    	method = &Benchmark::WaitForStableStateSinglLevel;
+    	fresh_db = false; 
+    	method = &Benchmark::WaitForStableStateSinglLevel; // 执行 compactsinglelevel 测试，压缩数据库到单个 level，单线程
       } else if (name == Slice("compactalllevels")) {
-    	fresh_db = false;
-    	method = &Benchmark::CompactAllLevels;
+    	fresh_db = false; 
+    	method = &Benchmark::CompactAllLevels; // 执行 compactalllevels 测试，压缩数据库到所有 level，单线程
       } else if (name == Slice("compactonce")) {
     	fresh_db = false;
-    	method = &Benchmark::CompactOnce;
+    	method = &Benchmark::CompactOnce; // 执行 compactonce 测试，压缩数据库，单线程
       } else if (name == Slice("reducelevelsby1")) {
     	fresh_db = false;
-    	method = &Benchmark::ReduceActiveLevelsByOne;
+    	method = &Benchmark::ReduceActiveLevelsByOne; // 执行 reducelevelsby1 测试，减少数据库中的 level，单线程
       } else if (name == Slice("compactmemtable")) {
     	fresh_db = false;
-    	method = &Benchmark::CompactMemtable;
+    	method = &Benchmark::CompactMemtable; // 执行 compactmemtable 测试，压缩数据库的 memtable，单线程
       } else if (name == Slice("printdb")) {
     	fresh_db = false;
-    	method = &Benchmark::PrintDB;
+    	method = &Benchmark::PrintDB; // 执行 printdb 测试，输出数据库信息
       } else if (name == Slice("filter")) {
-        PrintStats("leveldb.filter");
+        PrintStats("leveldb.filter"); // 执行 filter 测试，输出 filter 信息
       }
       else {
         if (name != Slice()) {  // No error message for empty name
@@ -1200,7 +1200,7 @@ class Benchmark {
     options.max_open_files = FLAGS_open_files;
     options.block_size = FLAGS_block_size;
     options.filter_policy = filter_policy_;
-    Status s = DB::Open(options, FLAGS_db, &db_);
+    Status s = DB::Open(options, FLAGS_db, &db_); // open db
     if (!s.ok()) {
       fprintf(stderr, "open error: %s\n", s.ToString().c_str());
       exit(1);
@@ -1588,9 +1588,9 @@ class Benchmark {
 }  // namespace leveldb
 
 int main(int argc, char** argv) {
-  FLAGS_write_buffer_size = leveldb::Options().write_buffer_size;
-  FLAGS_open_files = leveldb::Options().max_open_files;
-  FLAGS_block_size = leveldb::Options().block_size;
+  FLAGS_write_buffer_size = leveldb::Options().write_buffer_size; // default value 4MB
+  FLAGS_open_files = leveldb::Options().max_open_files; // default value 1000
+  FLAGS_block_size = leveldb::Options().block_size; // default value 4KB
   std::string default_db_path;
 
   for (int i = 1; i < argc; i++) {
@@ -1608,33 +1608,33 @@ int main(int argc, char** argv) {
                (n == 0 || n == 1)) {
       FLAGS_use_existing_db = n;
     } else if (sscanf(argv[i], "--num=%d%c", &n, &junk) == 1) {
-      FLAGS_num = n;
+      FLAGS_num = n; // 总请求个数
     } else if (sscanf(argv[i], "--reads=%d%c", &n, &junk) == 1) {
-      FLAGS_reads = n;
+      FLAGS_reads = n; // 读请求个数，如果为负，等于 FLAGS_num
     } else if (sscanf(argv[i], "--threads=%d%c", &n, &junk) == 1) {
-      FLAGS_threads = n;
+      FLAGS_threads = n; // 线程数
     } else if (sscanf(argv[i], "--write_threads=%d%c", &n, &junk) == 1) {
-      FLAGS_write_threads = n;
+      FLAGS_write_threads = n; // 写线程数
     } else if (sscanf(argv[i], "--read_threads=%d%c", &n, &junk) == 1) {
-      FLAGS_read_threads = n;
+      FLAGS_read_threads = n; // 读线程数
     } else if (sscanf(argv[i], "--value_size=%d%c", &n, &junk) == 1) {
-      FLAGS_value_size = n;
+      FLAGS_value_size = n; // 值大小
     } else if (sscanf(argv[i], "--write_buffer_size=%d%c", &n, &junk) == 1) {
-      FLAGS_write_buffer_size = n;
+      FLAGS_write_buffer_size = n; // 写缓冲区大小
     } else if (sscanf(argv[i], "--cache_size=%d%c", &n, &junk) == 1) {
-      FLAGS_cache_size = n;
+      FLAGS_cache_size = n; // 缓存大小
     } else if (sscanf(argv[i], "--block_size=%d%c", &n, &junk) == 1) {
-      FLAGS_block_size = n;
+      FLAGS_block_size = n; // 块大小
     } else if (sscanf(argv[i], "--bloom_bits=%d%c", &n, &junk) == 1) {
-      FLAGS_bloom_bits = n;
+      FLAGS_bloom_bits = n; // 布隆过滤器的位数
     } else if (sscanf(argv[i], "--open_files=%d%c", &n, &junk) == 1) {
-      FLAGS_open_files = n;
+      FLAGS_open_files = n; // 最大打开文件数
     } else if (sscanf(argv[i], "--num_next=%d%c", &n, &junk) == 1) {
-      FLAGS_num_next = n;
+      FLAGS_num_next = n; // ScanRandom 每次执行 next 的个数
     } else if (sscanf(argv[i], "--base_key=%d%c", &n, &junk) == 1) {
-      FLAGS_base_key = n;
+      FLAGS_base_key = n; // 随机 Key 的起始值
     } else if (strncmp(argv[i], "--db=", 5) == 0) {
-      FLAGS_db = argv[i] + 5;
+      FLAGS_db = argv[i] + 5; // db 路径
     } else {
       fprintf(stderr, "Invalid flag '%s'\n", argv[i]);
       exit(1);
@@ -1643,8 +1643,8 @@ int main(int argc, char** argv) {
 
   // Choose a location for the test database if none given with --db=<path>
   if (FLAGS_db == NULL) {
-      leveldb::Env::Default()->GetTestDirectory(&default_db_path);
-      default_db_path += "/dbbench";
+      leveldb::Env::Default()->GetTestDirectory(&default_db_path); // 默认 DB 目录
+      default_db_path += "/dbbench"; // DB 目录 + /dbbench
       FLAGS_db = default_db_path.c_str();
   }
 

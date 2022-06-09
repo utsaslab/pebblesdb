@@ -82,66 +82,67 @@ Status BuildLevel0Tables(const std::string& dbname,
 	  const FilterPolicy* filter_policy = options.filter_policy;
 	  int index = 0;
 
-	  iter->SeekToFirst();
-	  if (iter->Valid()) {
-		  for (int i = 0; i < num_guards; i++) {
-			  for (; iter->Valid(); iter->Next()) {
+	  iter->SeekToFirst(); // start from the first key
+	  if (iter->Valid()) { // if there is a first key
+		  for (int i = 0; i < num_guards; i++) { // for each guard
+			  for (; iter->Valid(); iter->Next()) { // for each key in the guard
 				  Slice key = iter->key();
 
 				  ParsedInternalKey parsed_key;
 				  ParseInternalKey(key, &parsed_key);
 
-				  GuardMetaData* current_guard = complete_guards_[i];
+				  GuardMetaData* current_guard = complete_guards_[i]; // get the current guard
 				  const Comparator* user_comparator = versions_->GetInternalComparator().user_comparator();
-				  if (user_comparator->Compare(parsed_key.user_key, current_guard->guard_key.user_key()) < 0) {
-					  if (count == 0) {
-						  	if (file_number_index < num_reserved_file_numbers) {
-						  		meta.number = reserved_file_numbers[file_number_index];
-							  	file_number_index++;
-						  	} else {
-							  	mutex_->Lock();
-								meta.number = versions_->NewFileNumber();
-								pending_outputs_->insert(meta.number);
-								mutex_->Unlock();
+				  if (user_comparator->Compare(parsed_key.user_key, current_guard->guard_key.user_key()) < 0) { // if the key is less than the guard key
+					  if (count == 0) { // if this is the first key in the guard
+						  	if (file_number_index < num_reserved_file_numbers) { // if there is a file number available
+						  		meta.number = reserved_file_numbers[file_number_index]; // assign the file number
+							  	file_number_index++; // increment the file number index
+						  	} else { // if there are no file numbers available
+							  	mutex_->Lock(); // lock the mutex
+								meta.number = versions_->NewFileNumber(); // assign a new file number
+								pending_outputs_->insert(meta.number); // add the file number to the pending outputs set
+								mutex_->Unlock(); // unlock the mutex
 						  	}
-							const std::string fname = TableFileName(dbname, meta.number);
-							s = env->NewWritableFile(fname, &file);
+							const std::string fname = TableFileName(dbname, meta.number); // get the file name
+							s = env->NewWritableFile(fname, &file); // create a new writable file
 							if (!s.ok()) {
 								return s;
 							}
-							builder = new TableBuilder(options, file);
-							meta.smallest.DecodeFrom(iter->key());
+							builder = new TableBuilder(options, file); // create a new table builder
+							meta.smallest.DecodeFrom(iter->key()); // set the smallest key
 					  }
-					  builder->Add(iter->key(), iter->value());
+					  builder->Add(iter->key(), iter->value()); // add the key and value to the builder
 #ifdef FILE_LEVEL_FILTER
-					  file_level_filter_builder->AddKey(key);
+					  file_level_filter_builder->AddKey(key); // add the key to the file level filter builder
 #endif
-					  meta.largest.DecodeFrom(iter->key());
-					  count++;
-					  tot_parsed++;
-				  } else {
-					  if (count > 0) {
-						  s = builder->Finish();
-						  if (s.ok()) {
-							  meta.file_size = builder->FileSize();
-							  assert(meta.file_size > 0);
-							  meta_list->push_back(meta);
+					  meta.largest.DecodeFrom(iter->key()); // set the largest key
+					  count++; // increment the count
+					  tot_parsed++; // increment the total parsed
+				  } else { // if the key is greater than or equal to the guard key
+					  if (count > 0) { // if there are keys in the guard （也就是前面比较的 guard）
+						  s = builder->Finish(); // finish the builder
+						  if (s.ok()) { // if the builder finished successfully
+							  meta.file_size = builder->FileSize(); // set the file size
+							  assert(meta.file_size > 0); 
+							  meta_list->push_back(meta); // add the meta to the meta list
 
+							  // 为文件创建过滤器，并将过滤器字符串添加到过滤器列表中
 							  // Calculate the filter string for this file
 							  AddFilterString(file_level_filter_builder, index, filter_list, filter_policy, meta.number);
 							  table_cache->SetFileMetaDataMap(meta.number, meta.file_size, meta.smallest, meta.largest);
 						  }
-						  delete builder;
+						  delete builder; // delete the builder
 						  count = 0;
 						  index = 0;
-						  const std::string fname = TableFileName(dbname, meta.number);
-						  FinishFileCompletion(s, meta, file, table_cache, env, fname);
+						  const std::string fname = TableFileName(dbname, meta.number); // get the file name
+						  FinishFileCompletion(s, meta, file, table_cache, env, fname); // finish the file completion
 					  }
 					  break;
 				  }
 			  }
 		  }
-		  if (count > 0) {
+		  if (count > 0) { // if there are keys in the guard （对应的最后一个 guard，但是循环结束了）
 			  s = builder->Finish();
 			  if (s.ok()) {
 				  meta.file_size = builder->FileSize();
@@ -158,6 +159,8 @@ Status BuildLevel0Tables(const std::string& dbname,
 			  const std::string fname = TableFileName(dbname, meta.number);
 			  FinishFileCompletion(s, meta, file, table_cache, env, fname);
 		  }
+
+		  // 为最后一个 guard 或者 sentinel 创建文件
 		  // Creating file for the entries belonging to last guard (or) the sentinel (in case there are no guards)
 		  for (; iter->Valid(); iter->Next()) {
 			  if (count == 0) {

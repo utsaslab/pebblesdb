@@ -319,7 +319,7 @@ class Version {
 	assert(edit != NULL);
     for (int i = 0; i < config::kNumLevels; i++) {
     	for (int j = 0; j < complete_guards_[i].size(); j++) {
-    		edit->AddCompleteGuardFromExisting(i, complete_guards_[i][j]);
+    		edit->AddCompleteGuardFromExisting(i, complete_guards_[i][j]); // 把新生成的守卫加到 new_complete_guards_
     	}
     }
   }

@@ -81,10 +81,10 @@ Status WriteBatch::Iterate(Handler* handler) const {
           return Status::Corruption("bad WriteBatch Delete");
         }
         break;
-    case kTypeGuard:
+    case kTypeGuard: // 如果是 guard
 	if (GetLengthPrefixedSlice(&input, &key) &&
 	    GetVarint32(&input, &level)) {
-	  handler->HandleGuard(key, level);
+	  handler->HandleGuard(key, level); // 处理 guard
 	} else {
 	return Status::Corruption("bad WriteBatch Guard");
 	}
@@ -168,13 +168,13 @@ class MemTableInserter : public WriteBatch::Handler {
     /* Return harmlessly if no version to insert into. */
     if (!version_) return;
     assert(level < config::kNumLevels);
-    GuardMetaData* g = new GuardMetaData();
+    GuardMetaData* g = new GuardMetaData(); // 构造 guard 元数据，这里是最基础的元数据
     InternalKey ikey(key, sequence_, kTypeValue);
-    g->guard_key = ikey;
-    g->level = level;
-    g->number_segments = 0;
-    g->refs = 1;
-    version_->AddToCompleteGuards(g, level);
+    g->guard_key = ikey; // 设置 guard key
+    g->level = level; // 设置 guard level
+    g->number_segments = 0; // 设置 number segments，初始为 0
+    g->refs = 1; // 设置 refs，初始为 1
+    version_->AddToCompleteGuards(g, level); // 添加到指定的 level 中，一个维护 guards 的内存结构，为每个 level 维护 guards
 //    version_->AddToNewGuards(g, level);
     sequence_++;
   }
@@ -202,29 +202,30 @@ WriteBatch contents.
 
   virtual void Put(const Slice& key, const Slice& value) {
     // Need to hash and check the last few bits. 
-    void* input = (void*) key.data();
+    void* input = (void*) key.data(); 
     size_t size = key.size();
     const unsigned int murmur_seed = 42;
     unsigned int hash_result;
-    MurmurHash3_x86_32(input, size, murmur_seed, &hash_result);
+    MurmurHash3_x86_32(input, size, murmur_seed, &hash_result); // 对 key 做 hash
 
+    // 检查每一层，从最上面开始，为每一层构建守卫
     // Go through each level, starting from the top and checking if it
     // is a guard on that level. 
-    unsigned num_bits = top_level_bits;
+    unsigned num_bits = top_level_bits; // 27
     
     for (unsigned i = 0; i < config::kNumLevels; i++) {
       set_mask(num_bits);
-      if ((hash_result & bit_mask) == bit_mask) {
+      if ((hash_result & bit_mask) == bit_mask) { // 概率生成守卫
 		// found a guard
 		// Insert the guard to this level and all the lower levels
 		for (unsigned j = i; j < config::kNumLevels; j++) {
-			new_batch->PutGuard(key, j);
-			num_guards[j]++;
+			new_batch->PutGuard(key, j); // 添加守卫到 new_batch，编码对应的 key 和 level
+			num_guards[j]++; // 更新 num_guards 个数
 		}
 		break;
       }
       // Check next level
-      num_bits -= bit_decrement;
+      num_bits -= bit_decrement; // 每一层概率不同
     }
     sequence_++;
   }
@@ -248,7 +249,7 @@ WriteBatch contents.
    // Number of random bits to match in hash value for key to become
    // top level guard. Note that this has the least probability, will
    // increase as the levels become deeper.
-   const static unsigned top_level_bits = 27;
+   const static unsigned top_level_bits = 27; // 键要成为顶级守卫的哈希值中匹配的随机位数。注意，这是最小的概率，会随着层次的加深而增加。
    // Top level guard = 17 bits should match in guard
    // Next level guard = 15 bits
    // Next level guard = 13 bits and so on..
@@ -296,7 +297,7 @@ Status WriteBatchInternal::SetGuards(const WriteBatch* b,
   GuardInserter g_inserter;
   g_inserter.sequence_ = WriteBatchInternal::Sequence(b);
   g_inserter.new_batch = new_b;
-  Status s = b->Iterate(&g_inserter);
+  Status s = b->Iterate(&g_inserter); // 遍历 b 执行 g_inserter
   return s;
 }
   

@@ -234,9 +234,9 @@ DBImpl::DBImpl(const Options& raw_options, const std::string& dbname)
   backup_in_progress_.Release_Store(NULL);
   env_->StartThread(&DBImpl::CompactMemTableWrapper, this);
   for (int i = 1; i <= num_bg_compaction_threads_; i++) {
-	  env_->StartThread(&DBImpl::CompactLevelWrapper, this);
+	  env_->StartThread(&DBImpl::CompactLevelWrapper, this); // 多线程 compaction 线程创建
   }
-  num_bg_threads_ = num_bg_compaction_threads_ + 1;
+  num_bg_threads_ = num_bg_compaction_threads_ + 1; // 加上主线程
 
   // Reserve ten files or so for other uses and give the rest to TableCache.
   int max_open_files = options_.max_open_files;
@@ -664,16 +664,16 @@ Status DBImpl::WriteLevel0TableGuards(MemTable* mem, VersionEdit* edit,
   const uint64_t start_micros = env_->NowMicros();
   std::vector<FileMetaData> meta_list;
 
-  Iterator* iter = mem->NewIterator();
+  Iterator* iter = mem->NewIterator(); // 创建一个迭代器
   std::vector<GuardMetaData*> guards_;
   if (base != NULL) {
-  	guards_ = base->GetGuardsAtLevel(0);
+  	guards_ = base->GetGuardsAtLevel(0); // 获取当前level的guards
   }
-  int num_level0_guards = guards_.size();
-  uint64_t reserved_file_numbers[num_level0_guards+1];
+  int num_level0_guards = guards_.size(); // 获取当前level的guard数量
+  uint64_t reserved_file_numbers[num_level0_guards+1]; // 创建一个保留的文件号数组
   for (int i = 0; i <= num_level0_guards; i++) {
-	  reserved_file_numbers[i] = versions_->NewFileNumber();
-	  pending_outputs_.insert(reserved_file_numbers[i]);
+	  reserved_file_numbers[i] = versions_->NewFileNumber(); // 生成新的文件号
+	  pending_outputs_.insert(reserved_file_numbers[i]); // 添加到pending_outputs_中
   }
   Status s;
   {
@@ -681,18 +681,18 @@ Status DBImpl::WriteLevel0TableGuards(MemTable* mem, VersionEdit* edit,
     start_timer(BUILD_LEVEL0_TABLES);
     s = BuildLevel0Tables(dbname_, env_, options_, table_cache_, iter, &meta_list,
     					  file_level_filters, versions_, &pending_outputs_, guards_, &mutex_,
-						  reserved_file_numbers, file_level_filter_builder);
+						  reserved_file_numbers, file_level_filter_builder); // 创建 level0 上的表，按 guard 划分
     record_timer(BUILD_LEVEL0_TABLES);
 
     start_timer(GET_LOCK_AFTER_BUILD_LEVEL0_TABLES);
-    mutex_.Lock();
+    mutex_.Lock(); // 再次锁定 mutex_
     record_timer(GET_LOCK_AFTER_BUILD_LEVEL0_TABLES);
   }
   delete iter;
 
   start_timer(ADD_LEVEL0_FILES_TO_EDIT);
   uint64_t total_file_size = 0;
-  for (unsigned i = 0; i < meta_list.size(); i++) {
+  for (unsigned i = 0; i < meta_list.size(); i++) { // 遍历 meta_list，也就是新生成的 l0 文件
 		FileMetaData meta = meta_list[i];
 		Log(options_.info_log, "Level-0 table #%llu: %lld bytes %s",
 				(unsigned long long) meta.number,
@@ -702,26 +702,27 @@ Status DBImpl::WriteLevel0TableGuards(MemTable* mem, VersionEdit* edit,
 		// should not be added to the manifest.
 		int level = 0;
 		if (s.ok() && meta.file_size > 0) {
-			const Slice min_user_key = meta.smallest.user_key();
-			const Slice max_user_key = meta.largest.user_key();
+			const Slice min_user_key = meta.smallest.user_key(); // 获取最小的 user key
+			const Slice max_user_key = meta.largest.user_key(); // 获取最大的 user key
 			// Note: We are always putting the new files to level 0
-			edit->AddFile(level, meta.number, meta.file_size,
-						  meta.smallest, meta.largest);
-			numbers.push_back(meta.number);
-			total_file_size += meta.file_size;
+			edit->AddFile(level, meta.number, meta.file_size, 
+						  meta.smallest, meta.largest); // 将新生成的文件加入 edit 中
+			numbers.push_back(meta.number); // 将新生成的文件号加入 numbers 中
+			total_file_size += meta.file_size; // 累加文件大小
 		}
   }
 
+  // 添加剩余的保留但未使用的文件编号，以便可以从 pending_outputs 集合中删除它们
   // Adding the remaining reserved but unused file numbers so that they can be removed from the pending_outputs set
   for (unsigned i = meta_list.size(); i <= num_level0_guards; i++) {
 	  numbers.push_back(reserved_file_numbers[i]);
   }
   record_timer(ADD_LEVEL0_FILES_TO_EDIT);
 
-  CompactionStats stats;
+  CompactionStats stats; // 创建统计信息
   stats.micros = env_->NowMicros() - start_micros;
   stats.bytes_written = total_file_size;
-  stats_[0].Add(stats);
+  stats_[0].Add(stats); 
   return s;
 }
 
@@ -736,16 +737,16 @@ void DBImpl::CompactMemTableThread() {
     bg_memtable_cv_.Wait();
   }
   while (!shutting_down_.Acquire_Load()) {
-    while (!shutting_down_.Acquire_Load() && imm_ == NULL) {
+    while (!shutting_down_.Acquire_Load() && imm_ == NULL) { // Wait for an ImmutableMemTable to be created
       bg_memtable_cv_.Wait();
     }
-    if (shutting_down_.Acquire_Load()) {
+    if (shutting_down_.Acquire_Load()) { // DB is being deleted
       break;
     }
 
-    start_timer_simple(TOTAL_MEMTABLE_COMPACTION);
-    start_timer(TOTAL_MEMTABLE_COMPACTION);
-    cnt++;
+    start_timer_simple(TOTAL_MEMTABLE_COMPACTION); // Start timer for total memtable compaction
+    start_timer(TOTAL_MEMTABLE_COMPACTION); // Start timer for total memtable compaction
+    cnt++; // Count number of times memtable compaction is called
     // Save the contents of the memtable as a new Table
     VersionEdit edit;
     Version* base = versions_->current();
@@ -753,16 +754,17 @@ void DBImpl::CompactMemTableThread() {
     base->Ref();
     std::vector<uint64_t> numbers;
     uint64_t number = 0;
-    start_timer(WRITE_LEVEL0_TABLE_GUARDS);
+    start_timer(WRITE_LEVEL0_TABLE_GUARDS); // Start timer for writing level 0 table guards
     std::vector<std::string*> file_level_filters;
 
+    // Write level 0 table guards
     Status s = WriteLevel0TableGuards(imm_, &edit, base, numbers, &file_level_filter_builder, &file_level_filters);
     record_timer(WRITE_LEVEL0_TABLE_GUARDS);
     
     // Add all the complete guards to edit
     start_timer(CMT_ADD_COMPLETE_GUARDS_TO_EDIT);
     if (first_memtable_compaction) {
-    	base->AddCompleteGuardsToEdit(&edit);
+    	base->AddCompleteGuardsToEdit(&edit); // Add complete guards from edit to new_complete_guards_
     }
     record_timer(CMT_ADD_COMPLETE_GUARDS_TO_EDIT);
 
@@ -778,13 +780,13 @@ void DBImpl::CompactMemTableThread() {
       edit.SetLogNumber(logfile_number_);  // Earlier logs no longer needed
 
       start_timer(CMT_LOG_AND_APPLY);
-      s = versions_->LogAndApply(&edit, &mutex_, &bg_log_cv_, &bg_log_occupied_, numbers, file_level_filters, 1);
+      s = versions_->LogAndApply(&edit, &mutex_, &bg_log_cv_, &bg_log_occupied_, numbers, file_level_filters, 1); // 持久化 version
       record_timer(CMT_LOG_AND_APPLY);
     }
 
     start_timer(CMT_ERASE_PENDING_OUTPUTS);
     for (int v = 0; v < numbers.size(); v++) {
-    	pending_outputs_.erase(numbers[v]);
+    	pending_outputs_.erase(numbers[v]); // Erase all the pending outputs from pending_outputs_，持久化了也就可以删除内存中维护的结构了
     }
     record_timer(CMT_ERASE_PENDING_OUTPUTS);
 
@@ -797,7 +799,7 @@ void DBImpl::CompactMemTableThread() {
       bg_fg_cv_.SignalAll();
 
       bg_compaction_cv_.SignalAll();
-      DeleteObsoleteFiles();
+      DeleteObsoleteFiles(); // Delete obsolete files
       record_timer(CMT_DELETE_OBSOLETE_FILES);
     } else {
       RecordBackgroundError(s);
@@ -822,8 +824,8 @@ void DBImpl::CompactMemTableThread() {
   }
 
   Log(options_.info_log, "cleaning up CompactMemTableThread");
-  num_bg_threads_ -= 1;
-  bg_fg_cv_.SignalAll();
+  num_bg_threads_ -= 1; // Decrement number of background threads
+  bg_fg_cv_.SignalAll(); // Wake up any waiting background threads 告诉前台线程，可以继续了
 }
 
 void DBImpl::CompactRange(const Slice* begin, const Slice* end) {
@@ -960,7 +962,7 @@ void DBImpl::CompactLevelThread() {
   FileLevelFilterBuilder file_level_filter_builder(options_.filter_policy);
 
   while (!shutting_down_.Acquire_Load() && !allow_background_activity_) {
-    bg_compaction_cv_.Wait();
+    bg_compaction_cv_.Wait(); // Wait until there is work to do
   }
   while (!shutting_down_.Acquire_Load()) {
     while (!shutting_down_.Acquire_Load() &&
@@ -975,8 +977,8 @@ void DBImpl::CompactLevelThread() {
     assert(manual_compaction_ == NULL || num_bg_threads_ == 2);
 
     start_timer_simple(TOTAL_BACKGROUND_COMPACTION);
-    start_timer(TOTAL_BACKGROUND_COMPACTION);
-    Status s = BackgroundCompactionGuards(&file_level_filter_builder);
+    start_timer(TOTAL_BACKGROUND_COMPACTION); // Start timer for total background compaction
+    Status s = BackgroundCompactionGuards(&file_level_filter_builder); 
 
     record_timer(TOTAL_BACKGROUND_COMPACTION);
     record_timer_simple(TOTAL_BACKGROUND_COMPACTION);
@@ -1022,14 +1024,14 @@ Status DBImpl::BackgroundCompactionGuards(FileLevelFilterBuilder* file_level_fil
   bool is_manual = (manual_compaction_ != NULL);
   InternalKey manual_end;
   std::vector<GuardMetaData*> complete_guards_used_in_bg_compaction;
-  if (is_manual) {
+  if (is_manual) { // manual compaction 手动压缩
 	// TODO Handle CompactRange method for guards
     ManualCompaction* m = manual_compaction_;
-    c = versions_->CompactRange(m->level, m->begin, m->end);
+    c = versions_->CompactRange(m->level, m->begin, m->end); // 压缩指定范围的数据
     m->done = (c == NULL);
     if (c != NULL) {
       // TODO not true in case of guard design
-      manual_end = c->input(0, c->num_input_files(0) - 1)->largest;
+      manual_end = c->input(0, c->num_input_files(0) - 1)->largest; // 获取最大的key
     }
     Log(options_.info_log,
         "Manual compaction at level-%d from %s .. %s; will stop at %s\n",
@@ -1037,25 +1039,27 @@ Status DBImpl::BackgroundCompactionGuards(FileLevelFilterBuilder* file_level_fil
         (m->begin ? m->begin->DebugString().c_str() : "(begin)"),
         (m->end ? m->end->DebugString().c_str() : "(end)"),
         (m->done ? "(end)" : manual_end.DebugString().c_str()));
-  } else {
+  } else { // 自动压缩
 
-	start_timer(BGC_PICK_COMPACTION_LEVEL);
-    unsigned level = versions_->PickCompactionLevel(levels_locked_, straight_reads_ > kStraightReads, &force_compact);
-    record_timer(BGC_PICK_COMPACTION_LEVEL);
+	start_timer(BGC_PICK_COMPACTION_LEVEL); // start timer for picking compaction level
+    // straight_reads_ > kStraightReads，则是 Seek-Based Compaction
+    unsigned level = versions_->PickCompactionLevel(levels_locked_, straight_reads_ > kStraightReads, &force_compact); // 选择压缩的level
+    record_timer(BGC_PICK_COMPACTION_LEVEL); 
 
-    start_timer(BGC_PICK_COMPACTION);
-    if (level != config::kNumLevels) {
+    start_timer(BGC_PICK_COMPACTION); // start timer for picking compaction
+    if (level != config::kNumLevels) { // 选择相应的守卫
       c = versions_->PickCompactionForGuards(versions_->current(), level, &complete_guards_used_in_bg_compaction, force_compact);
     }
     record_timer(BGC_PICK_COMPACTION);
 
+    // 对要进行 compaction 的level 加锁
     if (c) {
       assert(!levels_locked_[c->level() + 0]);
       if (c->level() + 1 < config::kNumLevels) {
     	  assert(!levels_locked_[c->level() + 1]);
-    	  levels_locked_[c->level() + 1] = true;
+    	  levels_locked_[c->level() + 1] = true; // lock the next level
       }
-      levels_locked_[c->level() + 0] = true;
+      levels_locked_[c->level() + 0] = true; // lock the current level
     }
   }
 
@@ -1065,23 +1069,25 @@ Status DBImpl::BackgroundCompactionGuards(FileLevelFilterBuilder* file_level_fil
 //	status = Status::OK();
     // Nothing to do
   } else {
-    CompactionState* compact = new CompactionState(c);
+    CompactionState* compact = new CompactionState(c); // 创建 CompactionState
 
+    // 添加当前版本的守卫信息到 edit (主要是在 complete_guards_ 中添加新的守卫)
     // Add the guard information in current version to edit (primarily to add the new guards in complete_guards_)
     std::set<int> level_to_load_from_complete_guards;
     // NOTE: The complete guards are copied to the guards only during background compaction and not during manual
     // compaction. It is debatable and needs code change while picking compaction if this needs to be enabled.
-    if (!is_manual) {
+    if (!is_manual) { // 如果不是手动压缩，添加当前 level
 		level_to_load_from_complete_guards.insert(c->level());
-		if (!c->is_horizontal_compaction) {
+		if (!c->is_horizontal_compaction) { // 如果不是水平压缩，则需要添加下一个level
 			level_to_load_from_complete_guards.insert(c->level() + 1);
 		}
     }
-    start_timer(BGC_ADD_GUARDS_TO_EDIT);
-    versions_->current()->AddGuardsToEdit(compact->compaction->edit(), level_to_load_from_complete_guards);
+    start_timer(BGC_ADD_GUARDS_TO_EDIT); // start timer for adding guards to edit
+    versions_->current()->AddGuardsToEdit(compact->compaction->edit(), level_to_load_from_complete_guards); // 添加守卫到 edit
     record_timer(BGC_ADD_GUARDS_TO_EDIT);
 
-    start_timer(BGC_DO_COMPACTION_WORK_GUARDS);
+    // 执行真正的 compaction
+    start_timer(BGC_DO_COMPACTION_WORK_GUARDS); // start timer for doing compaction work
     status = DoCompactionWorkGuards(compact, complete_guards_used_in_bg_compaction, file_level_filter_builder);
     record_timer(BGC_DO_COMPACTION_WORK_GUARDS);
 
@@ -1089,7 +1095,7 @@ Status DBImpl::BackgroundCompactionGuards(FileLevelFilterBuilder* file_level_fil
       RecordBackgroundError(status);
     }
 
-    start_timer(BGC_CLEANUP_COMPACTION);
+    start_timer(BGC_CLEANUP_COMPACTION); // start timer for cleaning up compaction
     CleanupCompaction(compact);
     c->ReleaseInputs();
     DeleteObsoleteFiles();
@@ -1097,6 +1103,7 @@ Status DBImpl::BackgroundCompactionGuards(FileLevelFilterBuilder* file_level_fil
   }
 
   if (c) {
+    // 解锁
     levels_locked_[c->level() + 0] = false;
     levels_locked_[c->level() + 1] = false;
     delete c;
@@ -1295,7 +1302,8 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
   bg_compaction_cv_.Signal();
 
   start_timer(BGC_MAKE_INPUT_ITERATOR);
-  Iterator* input = versions_->MakeInputIteratorForGuardsInALevel(compact->compaction);
+  // 为每个 level 创建一个全局的有序的迭代器
+  Iterator* input = versions_->MakeInputIteratorForGuardsInALevel(compact->compaction); // input iterator for the level to be compacted
   record_timer(BGC_MAKE_INPUT_ITERATOR);
 
   int index = 0;
@@ -1313,13 +1321,14 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
 
   // If the compaction level is the last level, get the guards of the same level
   // Else, get the guards of the next level since the new files will be populated to next level
-  guards = complete_guards_used_in_bg_compaction;
+  guards = complete_guards_used_in_bg_compaction; // 参与后台 compaction 的完整守卫列表
   unsigned num_guards = guards.size(), current_guard = 0;
 
   start_timer(BGC_ITERATE_KEYS_AND_SPLIT);
   InternalKey prev;
   bool first_entry = true;
   int cnt = 0;
+  // 遍历每个 level 中的迭代器的数据
   for (; input->Valid() && !shutting_down_.Acquire_Load(); ) {
 	Slice key = input->key();
 	cnt++;
@@ -1338,6 +1347,7 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
             compact->builder->FileSize() >=
             compact->compaction->MinOutputFileSize() &&
             compact->compaction->CrossesBoundary(current_key, ikey, &boundary_hint)) {
+          // Done with all the keys in the current output group
           start_timer(BGC_FINISH_COMPACTION_OUTPUT_FILE);
           status = FinishCompactionOutputFile(compact, input, file_level_filter_builder, &file_numbers, &file_level_filters);
           index = 0;
@@ -1386,6 +1396,7 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
     }
 
     if (!drop) {
+      // builder 为空，新建一个输出文件
       // Open output file if necessary
       if (compact->builder == NULL) {
     	start_timer(BGC_OPEN_COMPACTION_OUTPUT_FILE);
@@ -1396,16 +1407,19 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
         }
       }
 
+      // 基于守卫键划分文件
       // To split the files based on the guard keys
       InternalKey current_ikey;
       current_ikey.DecodeFrom(key);
       if (current_guard < guards.size()
-    		  && user_comparator()->Compare(current_ikey.user_key(), guards[current_guard]->guard_key.user_key()) >= 0) {
+    		  && user_comparator()->Compare(current_ikey.user_key(), guards[current_guard]->guard_key.user_key()) >= 0) { // 当前键大于当前守卫键
     	  unsigned temp = current_guard;
     	  while (temp < guards.size()
-    		  && user_comparator()->Compare(current_ikey.user_key(), guards[temp]->guard_key.user_key()) >= 0) {
-    		  temp++;
+    		  && user_comparator()->Compare(current_ikey.user_key(), guards[temp]->guard_key.user_key()) >= 0) { // 当前键大于当前守卫键
+    		  temp++; // 找到对应的守卫索引 temp，也就是第一个大于当前键的守卫
     	  }
+          // 如果当前的 guard 键是最后一个，则 flush
+          // If the current key is the last guard key, then we need to flush the
           if (compact->builder->NumEntries() > 0) {
               start_timer(BGC_FINISH_COMPACTION_OUTPUT_FILE);
         	  status = FinishCompactionOutputFile(compact, input, file_level_filter_builder, &file_numbers, &file_level_filters);
@@ -1418,6 +1432,7 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
           }
       }
 
+      // 再次打开输出文件，以防文件在达到守卫限制后被关闭
       // Open output file again in case the file was closed after reaching the guard  limit
       if (compact->builder == NULL) {
       	start_timer(BGC_OPEN_COMPACTION_OUTPUT_FILE);
@@ -1434,9 +1449,10 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
       compact->builder->Add(key, input->value());
 
 #ifdef FILE_LEVEL_FILTER
-      file_level_filter_builder->AddKey(key);
+      file_level_filter_builder->AddKey(key); // add key to file level filter
 #endif
 
+      // 文件大小超过限制，则 flush
       // Close output file if it is big enough
       if (compact->builder->FileSize() >=
           compact->compaction->MaxOutputFileSize()) {
@@ -1495,6 +1511,7 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
 
   record_timer(BGC_COLLECT_STATS);
 
+  // 在提交之前加锁
   start_timer(BGC_GET_LOCK_BEFORE_INSTALL);
   mutex_.Lock();
   record_timer(BGC_GET_LOCK_BEFORE_INSTALL);
@@ -1508,6 +1525,7 @@ Status DBImpl::DoCompactionWorkGuards(CompactionState* compact,
 
   start_timer(BGC_INSTALL_COMPACTION_RESULTS);
   if (status.ok()) {
+    // Save the contents of the lastest compaction
 	  status = InstallCompactionResults(compact, level_written_to, file_numbers, file_level_filters);
   }
   record_timer(BGC_INSTALL_COMPACTION_RESULTS);
@@ -1593,7 +1611,7 @@ Status DBImpl::Get(const ReadOptions& options,
   Status s;
   start_timer_simple(GET_OVERALL_TIME);
   start_timer(GET_OVERALL_TIME);
-  start_timer(GET_TIME_TO_GET_MUTEX);
+  start_timer(GET_TIME_TO_GET_MUTEX); // 加锁计时
   MutexLock l(&mutex_);
   record_timer(GET_TIME_TO_GET_MUTEX);
 
@@ -1618,7 +1636,8 @@ Status DBImpl::Get(const ReadOptions& options,
 
   // Unlock while reading from files and memtables
   {
-    mutex_.Unlock();
+    mutex_.Unlock(); // 解锁
+    // 查找 Mem 和 imm 中的数据
     // First look in the memtable, then in the immutable memtable (if any).
     start_timer(GET_TIME_TO_CHECK_MEM_IMM);
     LookupKey lkey(key, snapshot);
@@ -1629,6 +1648,7 @@ Status DBImpl::Get(const ReadOptions& options,
     } else {
       record_timer(GET_TIME_TO_CHECK_MEM_IMM);
 
+      // 查询 version 计时
       start_timer(GET_TIME_TO_CHECK_VERSION);
       s = current->Get(options, lkey, value, &stats);
       total_files_read += current->num_files_read;
@@ -1864,29 +1884,29 @@ Status DBImpl::Delete(const WriteOptions& options, const Slice& key) {
 }
 
 Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
-  Writer w(&writers_mutex_);
+  Writer w(&writers_mutex_); // 加锁
   Status s;
 
   start_timer_simple(WRITE_OVERALL_TIME);
   start_timer(WRITE_OVERALL_TIME);
-  start_timer(WRITE_SEQUENCE_WRITE_BEGIN_TOTAL);
-  s = SequenceWriteBegin(&w, updates);
+  start_timer(WRITE_SEQUENCE_WRITE_BEGIN_TOTAL); // Sequence 生成计时，并腾出空间写入
+  s = SequenceWriteBegin(&w, updates); // 写入 Sequence
   record_timer(WRITE_SEQUENCE_WRITE_BEGIN_TOTAL);
 
   WriteBatch* updates_with_guards = NULL;
   if (s.ok() && updates != NULL) { // NULL batch is for compactions
 
     start_timer(WRITE_SET_SEQUENCE_CREATE_NEW_BATCH);
-    WriteBatchInternal::SetSequence(updates, w.start_sequence_);
+    WriteBatchInternal::SetSequence(updates, w.start_sequence_); // 设置起始 seq
 
     /* Create a new WriteBatch which includes the guards. */
-    updates_with_guards = new WriteBatch(*updates);
+    updates_with_guards = new WriteBatch(*updates); // 构建 Batch updates_with_guards
     record_timer(WRITE_SET_SEQUENCE_CREATE_NEW_BATCH);
 
     /* This step adds guards to the new WriteBatch, which can then be
        used to generate new serialized contents. */
     start_timer(WRITE_SET_GUARDS);
-    s = WriteBatchInternal::SetGuards(updates, updates_with_guards);
+    s = WriteBatchInternal::SetGuards(updates, updates_with_guards); // 概率构建守卫信息
     record_timer(WRITE_SET_GUARDS);
 
     if (!s.ok()) {
@@ -1898,7 +1918,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
     // because both the log and the memtable are safe for concurrent access.
     // The synchronization with readers occurs with SequenceWriteEnd.
     start_timer(WRITE_LOG_ADDRECORD);
-    s = w.log_->AddRecord(WriteBatchInternal::Contents(updates_with_guards));
+    s = w.log_->AddRecord(WriteBatchInternal::Contents(updates_with_guards)); // 写入日志
     record_timer(WRITE_LOG_ADDRECORD);
 
     if (!s.ok()) {
@@ -1908,14 +1928,14 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
     
     if (s.ok() && options.sync) {
       start_timer(WRITE_LOG_FILE_SYNC);
-      s = w.logfile_->Sync();
+      s = w.logfile_->Sync(); //  同步日志文件
       record_timer(WRITE_LOG_FILE_SYNC);
     }
   }
 
   start_timer(WRITE_SEQUENCE_WRITE_END_TOTAL);
-  SequenceWriteEnd(&w, updates_with_guards, s);
-  record_timer(WRITE_SEQUENCE_WRITE_END_TOTAL);
+  SequenceWriteEnd(&w, updates_with_guards, s); // 执行写入
+  record_timer(WRITE_SEQUENCE_WRITE_END_TOTAL); // 结束计时
   record_timer(WRITE_OVERALL_TIME);
   record_timer_simple(WRITE_OVERALL_TIME);
 
@@ -1929,15 +1949,15 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
 
   {
 	start_timer(SWB_INIT_MUTEX);
-    MutexLock l(&mutex_);
+    MutexLock l(&mutex_); // 加锁
     record_timer(SWB_INIT_MUTEX);
 
     straight_reads_ = 0;
     bool force = updates == NULL;
     bool enqueue_mem = false;
-    w->micros_ = versions_->NumLevelFiles(0);
+    w->micros_ = versions_->NumLevelFiles(0); // 初始化
 
-    start_timer(SWB_INIT_MEMTABLES);
+    start_timer(SWB_INIT_MEMTABLES); // 初始化 memtable计时
     while (true) {
       if (!bg_error_.ok()) {
         // Yield previous error
@@ -1945,22 +1965,25 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
         break;
       } else if (!force &&
                  (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {
+        // 有足够空间写入
         // There is room in current memtable
         // Note that this is a sloppy check.  We can overfill a memtable by the
         // amount of concurrently written data.
         break;
       } else if (imm_ != NULL) {
+        // 空间不够写入，但是有 imm 正在 compact
         // We have filled up the current memtable, but the previous
         // one is still being compacted, so we wait.
 
         bg_memtable_cv_.Signal();
         bg_fg_cv_.Wait();
       } else {
+        // 切换到新的 mem 并触发 flush
         // Attempt to switch to a new memtable and trigger compaction of old
         assert(versions_->PrevLogNumber() == 0);
-        uint64_t new_log_number = versions_->NewFileNumber();
+        uint64_t new_log_number = versions_->NewFileNumber(); // 获取一个新的文件号给 WAL
         ConcurrentWritableFile* lfile = NULL;
-        s = env_->NewConcurrentWritableFile(LogFileName(dbname_, new_log_number), &lfile);
+        s = env_->NewConcurrentWritableFile(LogFileName(dbname_, new_log_number), &lfile); // 创建一个新的 WAL 文件，并发写入
         if (!s.ok()) {
           // Avoid chewing through file number space in a tight loop.
           versions_->ReuseFileNumber(new_log_number);
@@ -1971,16 +1994,16 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
         log_.reset(new log::Writer(lfile));
         imm_ = mem_;
         w->has_imm_ = true;
-        mem_ = new MemTable(internal_comparator_);
+        mem_ = new MemTable(internal_comparator_); // 创建一个新的 memtable
         mem_->Ref();
         force = false;   // Do not force another compaction if have room
         enqueue_mem = true;
         break;
       }
     }
-    record_timer(SWB_INIT_MEMTABLES);
+    record_timer(SWB_INIT_MEMTABLES); // 初始化 memtable 的计时结束
 
-    start_timer(SWB_SET_LOG_DETAILS);
+    start_timer(SWB_SET_LOG_DETAILS); // 设置 log 的详细信息
     if (s.ok()) {
       w->log_ = log_;
       w->logfile_ = logfile_;
@@ -1990,11 +2013,11 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
     }
     record_timer(SWB_SET_LOG_DETAILS);
 
-    start_timer(SWB_ENQUEUE_MEM);
+    start_timer(SWB_ENQUEUE_MEM); // 将 memtable 加入队列
     if (enqueue_mem) {
       for (std::list<ReplayIteratorImpl*>::iterator it = replay_iters_.begin();
           it != replay_iters_.end(); ++it) {
-        (*it)->enqueue(mem_, w->start_sequence_);
+        (*it)->enqueue(mem_, w->start_sequence_); // 将 memtable 加入队列
       }
     }
     record_timer(SWB_ENQUEUE_MEM);
@@ -2002,23 +2025,23 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
 
   if (s.ok()) {
 	start_timer(SWB_SET_TAIL);
-    uint64_t diff = updates ? WriteBatchInternal::Count(updates) : 0;
+    uint64_t diff = updates ? WriteBatchInternal::Count(updates) : 0; // 获取 updates 的数量
     uint64_t ticket = 0;
     w->linked_ = true;
     w->next_ = NULL;
 
     writers_mutex_.Lock();
-    if (writers_tail_) {
-      writers_tail_->next_ = w;
-      w->prev_ = writers_tail_;
+    if (writers_tail_) { // 如果有 tail
+      writers_tail_->next_ = w; // 将 w 放到 tail 的后面
+      w->prev_ = writers_tail_; // 更新 w 的 prev
     }
     record_timer(SWB_SET_TAIL);
 
     start_timer(SWB_SYNC_AND_FETCH);
-    writers_tail_ = w;
-    ticket = __sync_add_and_fetch(&writers_upper_, 1 + diff);
+    writers_tail_ = w; // 更新 tail 指向 w
+    ticket = __sync_add_and_fetch(&writers_upper_, 1 + diff); // 将 writers_upper_ 加上 1 + diff 并返回
     while (w->block_if_backup_in_progress_ &&
-           backup_in_progress_.Acquire_Load()) {
+           backup_in_progress_.Acquire_Load()) { // 如果备份正在进行，则阻塞
       w->wake_me_when_head_ = true;
       w->cv_.Wait();
       w->wake_me_when_head_ = false;
@@ -2026,8 +2049,8 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
     record_timer(SWB_SYNC_AND_FETCH);
 
     writers_mutex_.Unlock();
-    w->start_sequence_ = ticket - diff;
-    w->end_sequence_ = ticket;
+    w->start_sequence_ = ticket - diff; // 设置 w 的开始序列
+    w->end_sequence_ = ticket; // 设置 w 的结束序列
   }
 
   return s;
@@ -2035,12 +2058,12 @@ Status DBImpl::SequenceWriteBegin(Writer* w, WriteBatch* updates) {
 
 void DBImpl::SequenceWriteEnd(Writer* w, WriteBatch* updates_with_guards, Status s) {
   int a;
-  if (!w->linked_) {
+  if (!w->linked_) { // 如果 w 没有被加入队列
     return;
   }
 
   start_timer(SWE_LOCK_MUTEX);
-  mutex_.Lock();
+  mutex_.Lock(); // 加锁
   record_timer(SWE_LOCK_MUTEX);
 
   // HACK! Using current mem_ instead of w->mem_
@@ -2048,19 +2071,19 @@ void DBImpl::SequenceWriteEnd(Writer* w, WriteBatch* updates_with_guards, Status
   if (s.ok() && updates_with_guards != NULL) {
 	start_timer(WRITE_INSERT_INTO_VERSION);
 	s = WriteBatchInternal::InsertIntoVersion(updates_with_guards,
-					mem_, versions_->current());
+					mem_, versions_->current()); // 将 updates_with_guards 插入 mem_，并且维护 guard
 	record_timer(WRITE_INSERT_INTO_VERSION);
   }
   if (!s.ok()) {
 	RecordBackgroundError(s);
   }
 
-  versions_->SetLastSequence(w->end_sequence_);
+  versions_->SetLastSequence(w->end_sequence_); // 设置 versions 的最后序列
   mem_->Unref();
   mutex_.Unlock();
 
   start_timer(SWE_LOCK_WRITERS_MUTEX);
-  writers_mutex_.Lock();
+  writers_mutex_.Lock(); // 加写锁，更新 writer 队列
   if (w->prev_) {
     w->prev_->next_ = w->next_;
     if (w->has_imm_) {
@@ -2082,7 +2105,7 @@ void DBImpl::SequenceWriteEnd(Writer* w, WriteBatch* updates_with_guards, Status
   record_timer(SWE_SET_NEXT);
 
   start_timer(SWE_UNLOCK_WRITERS_MUTEX);
-  if (writers_tail_ == w) {
+  if (writers_tail_ == w) { // 如果 w 是 tail
     assert(!w->next_);
     writers_tail_ = NULL;
   }
@@ -2090,17 +2113,17 @@ void DBImpl::SequenceWriteEnd(Writer* w, WriteBatch* updates_with_guards, Status
   record_timer(SWE_UNLOCK_WRITERS_MUTEX);
 
   start_timer(SWE_SET_IMM);
-  if (w->has_imm_ && !w->prev_) {
+  if (w->has_imm_ && !w->prev_) { // 如果 w 是 head，并且有 imm
     mutex_.Lock();
-    has_imm_.Release_Store(imm_);
-    w->has_imm_ = false;
-    bg_memtable_cv_.Signal();
+    has_imm_.Release_Store(imm_); // 将 has_imm_ 设置为 imm_
+    w->has_imm_ = false; // 将 w 的 has_imm_ 设置为 false
+    bg_memtable_cv_.Signal(); // 唤醒 bg_memtable_cv_，执行刷回
     mutex_.Unlock();
   }
   record_timer(SWE_SET_IMM);
 
-  if (w->micros_ > config::kL0_SlowdownWritesTrigger) {
-    start_timer(SWE_SLEEP);
+  if (w->micros_ > config::kL0_SlowdownWritesTrigger) { // 如果 w->micros_ 大于 kL0_SlowdownWritesTrigger
+    start_timer(SWE_SLEEP); // 则休眠
 	env_->SleepForMicroseconds(w->micros_ - config::kL0_SlowdownWritesTrigger);
     record_timer(SWE_SLEEP);
   }

@@ -855,7 +855,7 @@ Status Version::Get(const ReadOptions& options,
                     std::string* value,
                     GetStats* stats) {
 #ifdef READ_PARALLEL
-  pthread_t current_thread = vset_->env_->GetThreadId();
+  pthread_t current_thread = vset_->env_->GetThreadId(); // 并行读获取读线程
 #endif
   Slice ikey = k.internal_key();
   Slice user_key = k.user_key();
@@ -868,46 +868,51 @@ Status Version::Get(const ReadOptions& options,
   int last_file_read_level = -1;
 
   num_files_read = 0;
+  // 遍历 level 读取数据
   // We can search level-by-level since entries never hop across
   // levels.  Therefore we are guaranteed that if we find data
   // in an smaller level, later levels are irrelevant.
   for (unsigned level = 0; level < config::kNumLevels; level++) {
     std::vector<FileMetaData*> tmp2;
-    size_t num_files = files_[level].size();
-    size_t num_guards = guards_[level].size();
-    if (num_files == 0) {
+    size_t num_files = files_[level].size(); // 获取 level 中的文件数量
+    size_t num_guards = guards_[level].size(); // 获取 level 中的 guard 数量
+    if (num_files == 0) { // 如果 level 中没有文件，则跳过
     	continue;
     }
 
     // Get the list of files to search in this level
-    FileMetaData* const* files = &files_[level][0];
+    FileMetaData* const* files = &files_[level][0]; // 获取 level 中的第一个文件
 
-    vstart_timer(GET_FIND_GUARD, BEGIN, 1);
+    vstart_timer(GET_FIND_GUARD, BEGIN, 1); // 开始找 guard 计时
     // Get the guard_index in whose range the key lies in
-	uint32_t guard_index = FindGuard(vset_->icmp_, guards_[level], ikey);
+	uint32_t guard_index = FindGuard(vset_->icmp_, guards_[level], ikey); // 获取 guard_index
 	vrecord_timer(GET_FIND_GUARD, BEGIN, 1);
 
     // Once we find the guard, we need to do binary searches inside
     // the files of each guard.
     GuardMetaData *g;
     if (num_guards > 0) {
-    	g = guards_[level][guard_index];
+    	g = guards_[level][guard_index]; // 获取 guard
     }
 
 	// If the guard chosen is the first in the level and if the lookup key is less
     // than the guard key of the first guard, it means that the key might be present in one
     // of the sentinel files of that level.
 
-    vstart_timer(GET_FIND_LIST_OF_FILES, BEGIN, 1);
-    if (num_guards == 0				// If there are no guards in the level, look at the sentinel files
+    vstart_timer(GET_FIND_LIST_OF_FILES, BEGIN, 1); // 开始找文件计时
+    // 查找 sentinel 文件。两种情况：
+    // case1 - 当前 level 没有守卫
+    // case2 - 当前 level 有守卫，但是发现要查询的是守卫 0，对应的要查询的键又小于守卫 0
+    if (num_guards == 0				// If there are no guards in the level, look at the sentinel files 
     		|| (guard_index == 0	// If there are guards in the level and guard_index is 0, key can either be in sentinel or in the first(0-index) guard
-    		&& num_guards > 0
+    		&& num_guards > 0 // 如果 level 中有 guard，且 guard_index 为 0，Key 可能在 sentinel 或第一个(0-index) 守卫中
 			&& ucmp->Compare(g->guard_key.user_key(), user_key) > 0)) {
-    	vstart_timer(GET_CHECK_SENTINEL_FILES, BEGIN, 1);
+    	vstart_timer(GET_CHECK_SENTINEL_FILES, BEGIN, 1); // 开始检查 sentinel 文件计时
 
-    	std::vector<FileMetaData*> files_in_sentinel = sentinel_files_[level];
-    	for (size_t i = 0; i < sentinel_files_[level].size(); i++) {
+    	std::vector<FileMetaData*> files_in_sentinel = sentinel_files_[level]; // 获取 level 中的 sentinel 文件
+    	for (size_t i = 0; i < sentinel_files_[level].size(); i++) { // 遍历 sentinel 文件
     		FileMetaData* f = sentinel_files_[level][i];
+        // 优化: 只添加所需键介于最小和最大之间的文件
     		// Optimization: Adding only the files where the required key lies between smallest and largest
     		if (ucmp->Compare(user_key, f->smallest.user_key()) >= 0
     				&& ucmp->Compare(user_key, f->largest.user_key()) <= 0) {
@@ -916,15 +921,16 @@ Status Version::Get(const ReadOptions& options,
     	}
     	vrecord_timer(GET_CHECK_SENTINEL_FILES, BEGIN, 1);
 
-    	vstart_timer(GET_SORT_SENTINEL_FILES, BEGIN, 1);
+    	vstart_timer(GET_SORT_SENTINEL_FILES, BEGIN, 1); // 开始排序 sentinel 文件计时
+      // 按最新的优先排序，将处理更新
     	// Sorting by newest first that will handle updates
     	// TODO: If this sorting is moved to LogAndApply, sorting need not be done during read
     	std::sort(tmp2.begin(), tmp2.end(), NewestFirst);
    		files = &tmp2[0];
    		num_files = tmp2.size();
    		vrecord_timer(GET_SORT_SENTINEL_FILES, BEGIN, 1);
-    } else if (g->number_segments > 0) {
-		vstart_timer(GET_CHECK_GUARD_FILES, BEGIN, 1);
+    } else if (g->number_segments > 0) { // 如果守卫的 number_segments > 0
+		vstart_timer(GET_CHECK_GUARD_FILES, BEGIN, 1); // 开始检查守卫文件计时
 		for (size_t i = 0; i < g->number_segments; i++) {
 			FileMetaData* f = g->file_metas[i];
     		// Optimization: Adding only the files where the required key lies between smallest and largest
@@ -935,20 +941,20 @@ Status Version::Get(const ReadOptions& options,
 		}
     	vrecord_timer(GET_CHECK_GUARD_FILES, BEGIN, 1);
 
-    	vstart_timer(GET_SORT_GUARD_FILES, BEGIN, 1);
+    	vstart_timer(GET_SORT_GUARD_FILES, BEGIN, 1); // 开始排序守卫文件计时
     	// Sorting by newest first that will handle updates
     	std::sort(tmp2.begin(), tmp2.end(), NewestFirst);
 		files = &tmp2[0];
 		num_files = tmp2.size();
    		vrecord_timer(GET_SORT_GUARD_FILES, BEGIN, 1);
-    } else {
+    } else { // 如果守卫的 number_segments == 0
     	num_files = 0;
     	files = NULL;
     }
     vrecord_timer(GET_FIND_LIST_OF_FILES, BEGIN, 1);
 
-#ifndef READ_PARALLEL
-    for (uint32_t i = 0; i < num_files; ++i) {
+#ifndef READ_PARALLEL // 如果不是并行读取
+    for (uint32_t i = 0; i < num_files; ++i) { // 遍历文件
       if (last_file_read != NULL && stats->seek_file == NULL) {
         // We have had more than one seek for this read.  Charge the 1st file.
         stats->seek_file = last_file_read;
@@ -962,14 +968,14 @@ Status Version::Get(const ReadOptions& options,
 
       bool key_may_match = true;
 
-#ifdef FILE_LEVEL_FILTER
+#ifdef FILE_LEVEL_FILTER // 如果开启了文件级过滤
       std::string* filter_string = vset_->file_level_bloom_filter[f->number];
       if (filter_string != NULL) {
 		  vstart_timer(GET_FILE_LEVEL_FILTER_CHECK, BEGIN, 1);
 		  Slice filter_slice = Slice(filter_string->data(), filter_string->size());
-		  key_may_match = vset_->options_->filter_policy->KeyMayMatch(ikey, filter_slice);
+		  key_may_match = vset_->options_->filter_policy->KeyMayMatch(ikey, filter_slice); // 检查 key 是否在过滤器中
 		  vrecord_timer(GET_FILE_LEVEL_FILTER_CHECK, BEGIN, 1);
-		  if (!key_may_match) {
+		  if (!key_may_match) { // 如果 key 不在过滤器中，则跳过该文件
 			  continue;
 		  }
       }
@@ -983,7 +989,7 @@ Status Version::Get(const ReadOptions& options,
 
       vstart_timer(GET_TABLE_CACHE_GET, BEGIN, 1);
       s = vset_->table_cache_->Get(options, f->number, f->file_size,
-			  ikey, &saver, SaveValue, vset_->timer);
+			  ikey, &saver, SaveValue, vset_->timer); // 从对应的文件中读取对应的数据（文件遍历读取）
       vrecord_timer(GET_TABLE_CACHE_GET, BEGIN, 1);
       num_files_read++;
 
@@ -1006,12 +1012,12 @@ Status Version::Get(const ReadOptions& options,
           break;
       }
     }
-#else
+#else // 如果是并行读取
     std::vector<Saver*> savers;
     std::vector<pthread_t> pthreads;
 
     std::vector<int> read_thread_indices;
-    int num_concurrent_reads = num_files;
+    int num_concurrent_reads = num_files; // 对应并发线程数就是文件数
     for (uint32_t i = 0; i < num_files; ++i) {
       if (last_file_read != NULL && stats->seek_file == NULL) {
         // We have had more than one seek for this read.  Charge the 1st file.
@@ -1030,24 +1036,24 @@ Status Version::Get(const ReadOptions& options,
       saver.user_key = user_key;
       savers.push_back(&saver);
 
-      vstart_timer(GET_TABLE_CACHE_GET, BEGIN, 1);
-      if (num_files == 1) {
+      vstart_timer(GET_TABLE_CACHE_GET, BEGIN, 1); // 开始计时 TableCache 读取
+      if (num_files == 1) { // 如果只有一个文件，则直接读取
     	  vstart_timer(GET_TABLE_CACHE_NUM_DIRECT_CALLS, BEGIN, 1);
     	  s = vset_->table_cache_->Get(options, f->number, f->file_size,
                   ikey, &saver, SaveValue, vset_->timer);
     	  vrecord_timer(GET_TABLE_CACHE_NUM_DIRECT_CALLS, BEGIN, 1);
-      } else {
+      } else { // 如果有多个文件，则使用多线程读取
     	  int index;
     	  // BUSY WAITING !! To get the index of the idle thread. Optimize !!
     	  vstart_timer(GET_TABLE_CACHE_NUM_THREADS_SIGNALLED, BEGIN, 1);
     	  while (true) {
-    		  index = vset_->GetIdleThreadIndex(current_thread);
+    		  index = vset_->GetIdleThreadIndex(current_thread); // 获取空闲线程的索引
     		  if (index >= 0 && index < NUM_READ_THREADS) {
-    			  break;
+    			  break; // 如果找到了空闲线程，则退出循环
     		  }
     	  }
-    	  read_thread_indices.push_back(index);
-    	  vset_->saver_values_from_read_[index] = &saver;
+    	  read_thread_indices.push_back(index); // 将线程索引添加到读线程索引列表中
+    	  vset_->saver_values_from_read_[index] = &saver; // 传入读取需要的基本参数
     	  vset_->file_numbers_to_read_[index] = f->number;
     	  vset_->file_sizes_to_read_[index] = f->file_size;
     	  vset_->internal_keys_to_read_[index] = ikey;
@@ -1059,33 +1065,33 @@ Status Version::Get(const ReadOptions& options,
 
     // TODO: Change value returning method since we are concurrently writing to the same value* in parallel reads.
     // Signalling the read threads to start.
-	vstart_timer(GET_TABLE_CACHE_SIGNAL_READ_THREADS, BEGIN, 1);
-    for (int i = 0; i < read_thread_indices.size(); i++) {
-    	vset_->read_threads_cv_[read_thread_indices[i]].Signal();
+	vstart_timer(GET_TABLE_CACHE_SIGNAL_READ_THREADS, BEGIN, 1); // 开始计时线程启动
+    for (int i = 0; i < read_thread_indices.size(); i++) { // 启动读线程
+    	vset_->read_threads_cv_[read_thread_indices[i]].Signal(); // signal 启动读线程
     }
 	vrecord_timer(GET_TABLE_CACHE_SIGNAL_READ_THREADS, BEGIN, 1);
     // BUSY WAITING ! TODO: Check the amount of time spent here and optimize !
 
-	vstart_timer(GET_TABLE_CACHE_WAIT_FOR_READ_THREADS, BEGIN, 1);
+	vstart_timer(GET_TABLE_CACHE_WAIT_FOR_READ_THREADS, BEGIN, 1); // 开始计时等待读线程结束
     while (true) {
     	bool completed = true;
     	for (int i = 0; i < read_thread_indices.size(); i++) {
     		if (vset_->read_threads_current_workload[read_thread_indices[i]] == current_thread) {
     			// If the read thread missed the previous Signal somehow, signal again.
-    			if (vset_->thread_status_[read_thread_indices[i]] == IDLE) {
-    				vset_->read_threads_cv_[read_thread_indices[i]].Signal();
+    			if (vset_->thread_status_[read_thread_indices[i]] == IDLE) { // 如果读线程处于空闲状态
+    				vset_->read_threads_cv_[read_thread_indices[i]].Signal(); // signal 启动读线程
     			}
     			completed = false;
     			break;
     		}
     	}
-    	if (completed) {
+    	if (completed) { // 如果所有读线程都已经完成了工作，则退出循环
     		break;
     	}
 	}
 	vrecord_timer(GET_TABLE_CACHE_WAIT_FOR_READ_THREADS, BEGIN, 1);
 
-    for (int i = 0; i < savers.size(); i++) {
+    for (int i = 0; i < savers.size(); i++) { // 将读取的结果放入 savers 中，遍历取得查询结果
       // TODO Return status from table_cache_->Get() is lost in this model, need to incorporate that.
       /*
       if (!s.ok()) {
@@ -2915,15 +2921,18 @@ Iterator* VersionSet::MakeInputIteratorForGuardsInALevel(Compaction* c) {
   uint64_t min_file_number = 0;
   for (int which = 0; which < 2; which++) {
     if (!c->inputs_[which].empty()) {
+      // 读取参与 compaction 的每一层的文件
 		const std::vector<FileMetaData*>* files = &c->inputs_[which];
 		const std::vector<FileMetaData*>* sentinel_files = &c->sentinel_inputs_[which];
 		const std::vector<GuardMetaData*>* guards = &c->guard_inputs_[which];
 
+      // 创建迭代器
     	Iterator* guard_iterator = new Version::LevelGuardNumIterator(icmp_, guards, sentinel_files, files, 0, timer);
     	list[num++] = NewTwoLevelIteratorGuards(guard_iterator, &GetGuardIterator, table_cache_, &icmp_, this, which + c->level(), options);
     }
   }
   assert(num <= space);
+  // 归并
   Iterator* result = NewMergingIterator(&icmp_, list, num, this);
   delete[] list;
   return result;
@@ -3021,30 +3030,36 @@ unsigned VersionSet::PickCompactionLevel(bool* locked, bool seek_driven, bool* f
   unsigned level = config::kNumLevels;
   bool no_horizontal_compact = false;
   int count_guard_scores = 0;
-  *force_compact = false;
+  *force_compact = false; // 默认为 false
+  // 从 1 层开始遍历
   for (unsigned i = 1; i + 1 < config::kNumLevels; ++i) {
-    if (locked[i] || locked[i + 1]) {
-      continue;
+    if (locked[i] || locked[i + 1]) { // 加锁了的 level 不做处理
+      continue; // skip locked levels
     }
+    // 当前 level 的 compaction_scores_ > 1，且当前 level compaction_scores_ > level i+1
     if (current_->compaction_scores_[i] >= 1.0 &&
         current_->compaction_scores_[i] >=
         current_->compaction_scores_[i + 1]) {
-      level = i;
-      break;
+      level = i; // found a level with score >= 1 且上层的 score 大于下层
+      break; // no need to search further
     }
   }
-  if (seek_driven &&
-      level == config::kNumLevels &&
-      current_->file_to_compact_ != NULL &&
-      !locked[current_->file_to_compact_level_ + 0] &&
+
+  if (seek_driven &&  // seek driven compaction 如果是读触发的，
+      level == config::kNumLevels && // 当前必须是最后一层（即上面的 score 条件判断不满足）
+      current_->file_to_compact_ != NULL && // 必须有文件要压缩
+      !locked[current_->file_to_compact_level_ + 0] && // 必须没有被锁定
       !locked[current_->file_to_compact_level_ + 1]) {
-    level = current_->file_to_compact_level_;
+    level = current_->file_to_compact_level_; // 目的是拿到这个 level
     current_->file_to_compact_ = NULL;
     current_->file_to_compact_level_ = -1;
   }
+  // 如果还是没找到，直接压缩最后一层，前提是最后一层的 score > 1 且没被锁
   if (level == config::kNumLevels && current_->compaction_scores_[config::kNumLevels-1] >= 1.0 && !locked[config::kNumLevels-1]) {
-	  level = config::kNumLevels-1;
+	  level = config::kNumLevels-1; // last level compaction
   }
+
+  // 如果 0 层和 1 层没锁，且 0 层的 score > 1, 1 层的 score < 1，直接选 0 层
   if (!locked[0] && !locked[1] &&
       current_->compaction_scores_[0] >= 1.0 &&
       current_->compaction_scores_[1] <= 1.0) {
@@ -3056,59 +3071,77 @@ unsigned VersionSet::PickCompactionLevel(bool* locked, bool seek_driven, bool* f
    * forcefully compact lower levels with very less data into higher levels to improve Seek/Read performance
    */
 #ifdef DISABLE_SEEK_BASED_COMPACTION
-  seek_driven = false;
+  seek_driven = false; // 关闭 seek based compaction
 #endif
 
+  // 如果是 seek/read driven 的压缩，且 前面条件都不满足
+  // 或者 seek/read driven 的压缩，且当前 level 的 score < 1
   if (seek_driven && (level == config::kNumLevels || current_->compaction_scores_[level] < 1.0)) {
 	  // Check if any level has very low data that can be compacted
 	  int max_level = -1;
+    // 从下往上找 level，只要哪一层包含数据，就选哪一层
 	  for (int i = config::kNumLevels-1; i >= 0; i--) {
 		  if (current_->files_[i].size() > 0) {
 			  max_level = i;
 			  break;
 		  }
 	  }
+    // 都没有数据，就返回 level
 	  if (max_level == -1) { // If all levels are empty
 		  return level;
 	  }
 
+    // 找到了第一个包含数据的 level，也就是当前 db 的最高层
+    // 从 maxlevel 开始向上遍历 levels
 	  for (int i = max_level; i >= 0; i--) {
-		  if (i >= config::kNumLevels-1) {
+		  if (i >= config::kNumLevels-1) { // 最后一层直接跳过
 			  continue;
 		  }
-		  if (locked[i] || locked[i+1] || current_->files_[i].size() == 0) {
+		  if (locked[i] || locked[i+1] || current_->files_[i].size() == 0) { // 空层跳过，加锁了跳过
 			  continue;
 		  }
-		  int64_t current_level_size = TotalFileSize(current_->files_[i]);
-		  int64_t next_level_size = TotalFileSize(current_->files_[i+1]);
-		  int64_t next_level_size_in_mb = next_level_size / (1024 * 1024);
+		  int64_t current_level_size = TotalFileSize(current_->files_[i]); // 当前 level 的大小
+		  int64_t next_level_size = TotalFileSize(current_->files_[i+1]); // 下一层的大小
+		  int64_t next_level_size_in_mb = next_level_size / (1024 * 1024); // 下一层的大小，单位 MB
 
 		  if (current_level_size == 0) {
-			  continue;
+			  continue; // 当前 level 没有数据，跳过
 		  }
+      // 下层大小 / 上层大小
 		  double inter_level_ratio = next_level_size / current_level_size;
 		  /*
 		   * If the total amount of data in the level is less than threshold or if the next level has huge amount of
 		   * data compared to this level, compact this level.
 		   * */
+          // next_level_size  < 25 * current_level_size
+          // next_level_size_in_mb < 10GB
           if (inter_level_ratio <= 25.0 || next_level_size_in_mb < FORCE_COMPACT_SIZE_THRESHOLD_IN_MB) {
               
+              // 如果这一层的数据量非常少(下一层与本层的比例大于25) 且如果哨兵或守卫的压实评分 > 1、那么水平压实就会触发。如果不是，则此级别不需要压缩。
+              // 在将 force_compact 设置为true之前，检查这个级别的水平压缩是否可能，因为这可能导致 PickCompactionLevel 和执行压缩的线程之间的循环。
               /*
                * If the amount of data in this level is very less (ratio of next level to current > 25) and if any of the sentinal or guard compaction score is > 1, then horizontal compaction will be triggered. If not, then this level requires no compaction. 
                * Check if horizontal compaction at this level is possible at all before setting force_compact to true, as this might result in a loop between PickCompactionLevel and the thread performing compaction.
                */
               if(inter_level_ratio > 25.0 && current_->compaction_scores_[i] < 1
                  && current_-> sentinel_compaction_scores_[i] < 1){
+                  // next_level_size_in_mb < 10GB 且 next_level_size > 25 * current_level_size 且当前层的 score < 1，且当前层的 sentinel_compaction_scores_ < 1
                   for(int k = 0; k < current_->guard_compaction_scores_[i].size(); k++)
+                      // 遍历守卫压缩评分
                       if(current_->guard_compaction_scores_[i][k] < 1)
-                          count_guard_scores ++ ;
+                          count_guard_scores ++ ; // 守卫压缩评分小于 1，则 count_guard_scores ++
+                  // 如果守卫压缩评分小于 1 的个数等于守卫压缩评分的个数，则水平压实。即所有守卫的 score < 1
                   if(count_guard_scores == current_->guard_compaction_scores_[i].size()){
-                      no_horizontal_compact = true;
+                      no_horizontal_compact = true; // 不需要水平压缩
                   }
-              }
+              } // inter_level_ratio < 25 就表明需要在该层水平压缩
+              // 不需要水平压缩，，跳过
               if(no_horizontal_compact)
                   continue;
               
+              
+              // 需要水平压缩
+              // 强制压缩设置为 true
               *force_compact = true;
               level = i;
               break;              
@@ -3129,44 +3162,51 @@ Compaction* VersionSet::PickCompactionForGuards(Version* v, unsigned level, std:
 	    return NULL;
 	  }
 
+    // 如果horizontal_compaction为true，则只会压缩最后一级的较小文件(以减小写入放大)
 	  /*
 	   * If horizontal_compaction is true, only smaller files in the last level are compacted (to reduce write amplification)
 	   */
 	  bool horizontal_compaction = false;
-	  if (level == config::kNumLevels-1) {
-		  horizontal_compaction = true;
-	  } else if (level == config::kNumLevels-2) {
+	  if (level == config::kNumLevels-1) { // 最后一层
+		  horizontal_compaction = true; // last level compaction
+	  } else if (level == config::kNumLevels-2) { // 倒数第二层
 		  int64_t current_level_size = TotalFileSize(current_->files_[level]);
 		  int64_t current_level_size_in_mb = current_level_size / (1024 * 1024);
 		  int64_t next_level_size = TotalFileSize(current_->files_[level+1]);
 
+      // 如果倒数第二层的数据比最后一层少很多，则在该层（倒数第二层）进行水平压缩
 		  // If the penultimate level contains very less data compared to last level, do horizontal compaction in that level
 		  if (current_level_size > 0 && next_level_size / current_level_size > 25.0) {
 			  horizontal_compaction = true;
 		  }
 	  }
-	  int num_input_levels_for_compaction = 2;
-	  if (horizontal_compaction) {
-		  num_input_levels_for_compaction = 1;
+	  int num_input_levels_for_compaction = 2; 
+	  if (horizontal_compaction) { // horizontal compaction only happens in the last level
+		  num_input_levels_for_compaction = 1; // 水平压缩就只有一层参与
 	  }
 
-	  std::vector<GuardMetaData*> complete_guards_copy[2];
+	  std::vector<GuardMetaData*> complete_guards_copy[2]; // 完整的守卫复制
 	  // sort the complete_guards because the guards added later might not be in the right sorted position
-	  SortBySmallestGuard guard_comparator;
+	  SortBySmallestGuard guard_comparator; 
 	  guard_comparator.internal_comparator = &icmp_;
 
+    // 水平压缩即为 1
+    // 非水平压缩即为 2
 	  for (int which = 0; which < num_input_levels_for_compaction; which++) {
-		  unsigned current_level = level + which;
+		  unsigned current_level = level + which; // 当前 level
 		  if (current_level >= config::kNumLevels) {
 			  break;
 		  }
+      // 复制该层的守卫元数据，水平压缩和非水平压缩的守卫元数据不同
 		  complete_guards_copy[which].insert(complete_guards_copy[which].begin(),
 				  	  	  	  	  	  	  	 v->complete_guards_[current_level].begin(),
-											 v->complete_guards_[current_level].end());
-		  std::sort(complete_guards_copy[which].begin(), complete_guards_copy[which].end(), guard_comparator);
+											 v->complete_guards_[current_level].end()); // 将 complete_guards_copy[which] 初始化为 v->complete_guards_[current_level]
+		  
+      // 按照 guard key 从小到大排序，每一层排序
+      std::sort(complete_guards_copy[which].begin(), complete_guards_copy[which].end(), guard_comparator); // 整个 level 进行排序，按 guards 排序
 
-		  // Remove duplicates
-		  if (complete_guards_copy[which].size() > 1) {
+		  // Remove duplicates 删除重复的 guards
+		  if (complete_guards_copy[which].size() > 1) { 
 			  GuardMetaData* prev = complete_guards_copy[which][0];
 			  std::vector<GuardMetaData*>::iterator it = complete_guards_copy[which].begin();
 			  it++;
@@ -3181,33 +3221,41 @@ Compaction* VersionSet::PickCompactionForGuards(Version* v, unsigned level, std:
 		  }
 	  }
 
-
-	  if (!horizontal_compaction) {
+    // complete_guards_used_in_bg_compaction 即为目标 level 的守卫信息
+	  if (!horizontal_compaction) { // 如果不是水平压缩，插入下一个 level 的 guards 到 complete_guards_used_in_bg_compaction
 		  complete_guards_used_in_bg_compaction->insert(complete_guards_used_in_bg_compaction->begin(),
 				  	  	  	  	  	  	  	  	  	    complete_guards_copy[1].begin(),
 														complete_guards_copy[1].end());
-	  } else {
+	  } else { // 如果是水平压缩，插入当前 level 的 guards 到 complete_guards_used_in_bg_compaction
 		  complete_guards_used_in_bg_compaction->insert(complete_guards_used_in_bg_compaction->begin(),
 				  	  	  	  	  	  	  	  	  	  	complete_guards_copy[0].begin(),
 														complete_guards_copy[0].end());
 	  }
 
+    // 至此得到了 complete_guards_copy 两层的完整的守卫列表
+    // complete_guards_used_in_bg_compaction 用于压缩的完整守卫列表
+
+    // 构造 compaction 元数据信息
 	  Compaction* c = new Compaction(level);
 	  c->input_version_ = v;
 	  c->input_version_->Ref();
 	  c->is_horizontal_compaction = horizontal_compaction;
 
+    // 水平压缩即为 1
+    // 非水平压缩即为 2
 	  for (int which = 0; which < num_input_levels_for_compaction; which++) {
-		  std::vector<GuardMetaData*> guards_to_add_to_compaction;
-		  std::vector<bool> guards_compaction_add_all_files;
+		  std::vector<GuardMetaData*> guards_to_add_to_compaction; // 将要添加到 compaction 的 guards
+		  std::vector<bool> guards_compaction_add_all_files; // 判断是否添加 guard 内的所有文件
 		  unsigned current_level = level + which;
 		  if (current_level >= config::kNumLevels) {
 			  break;
 		  }
 
-		  std::vector<GuardMetaData*> complete_guards = complete_guards_copy[which];
-		  std::vector<GuardMetaData*> guards = v->guards_[current_level];
+      // 获取当前 level 的完整守卫信息
+		  std::vector<GuardMetaData*> complete_guards = complete_guards_copy[which]; // 还在内存中的守卫信息，没有持久化
+		  std::vector<GuardMetaData*> guards = v->guards_[current_level]; // 获取已经存储了持久化的守卫信息
 
+      // 判断是否需要添加哨兵文件，如果压缩评分 >= 1.0(which=0) 或如果文件不再适合哨兵范围(由于新添加的第一个守卫)
 		  // Add sentinel files either if compaction score >= 1.0 (for which=0) or if the files don't fit
 		  // in the sentinel anymore (due to newly added first guard)
 		  bool add_sentinel_files = false;
@@ -3215,10 +3263,15 @@ Compaction* VersionSet::PickCompactionForGuards(Version* v, unsigned level, std:
 
 		  Slice first_guard_key;
 		  if (complete_guards.size() > 0) {
-			  first_guard_key = complete_guards[0]->guard_key.user_key();
+			  first_guard_key = complete_guards[0]->guard_key.user_key(); // 如果有守卫，则取第一个守卫的 key
 		  }
+
+      // 遍历当前 level 的 sentinel_files_ 哨兵文件
 		  for (unsigned i = 0; i < v->sentinel_files_[current_level].size(); i++) {
+        // 取出每个 sentinel_file 的最大 key
 			  Slice largest_key = v->sentinel_files_[current_level][i]->largest.user_key();
+        // 如果 sentinel_file 的最大 key 大于了第一个守卫的 key，则添加 sentinel_file，即 sentinel_file 需要压缩
+        // 因为 sentinel_file 的最大 key 可能比第一个守卫的 key 大，因为 sentinel_file 可能是压缩后的文件
 			  if (complete_guards.size() > 0 && icmp_.user_comparator()->Compare(largest_key, first_guard_key) >= 0) {
 				  add_sentinel_files = true;
 				  add_all_sentinel_files = true;
@@ -3226,64 +3279,71 @@ Compaction* VersionSet::PickCompactionForGuards(Version* v, unsigned level, std:
 			  }
 		  }
 
+      // 如果不需要添加 sentinel_files，且当前 level 为 0，score >= 1.0，也就 add_sentinel_files，即也需要压缩哨兵文件
+      // 因为 level 0 没有守卫，所以只有在 score >= 1.0 时才需要压缩哨兵文件
 		  if (!add_sentinel_files && which == 0 && (force_compact || v->sentinel_compaction_scores_[current_level] >= 1.0)){
 			  add_sentinel_files = true;
 			  add_all_sentinel_files = false;
 		  }
 
-		  int max_files_per_guard = MaxFilesPerGuardForLevel(current_level);
+		  int max_files_per_guard = MaxFilesPerGuardForLevel(current_level); // 取当前 level 的最大文件数
 		  if (max_files_per_guard <= 0) {
-			  max_files_per_guard = config::kMaxFilesPerGuardSentinel;
+			  max_files_per_guard = config::kMaxFilesPerGuardSentinel; // 每个 Sentinel 最多文件数
 		  }
-		  if (add_sentinel_files) {
+		  if (add_sentinel_files) { // 如果需要添加哨兵文件
 			  // TODO Not taking care of NewestFirst property, this might possibly return old values for updates - not taking care of that now.
-			  if (horizontal_compaction) {
-				  uint64_t total_size = TotalFileSize(v->sentinel_files_[current_level]);
-				  uint64_t avg_file_size = total_size / static_cast<double> (config::kMaxFilesPerGuardSentinel);
+			  if (horizontal_compaction) { // 如果是水平压缩，则添加符合条件的哨兵文件到 inputs_
+				  uint64_t total_size = TotalFileSize(v->sentinel_files_[current_level]); // 计算所有哨兵文件的总大小
+				  uint64_t avg_file_size = total_size / static_cast<double> (config::kMaxFilesPerGuardSentinel); // 计算平均文件大小
 
-				  for (unsigned i = 0; i < v->sentinel_files_[current_level].size(); i++) {
-					  FileMetaData* f = v->sentinel_files_[current_level][i];
-					  if (add_all_sentinel_files || f->file_size < avg_file_size) {
-						  c->inputs_[which].push_back(v->sentinel_files_[current_level][i]);
-						  c->sentinel_inputs_[which].push_back(v->sentinel_files_[current_level][i]);
+				  for (unsigned i = 0; i < v->sentinel_files_[current_level].size(); i++) { // 遍历所有哨兵文件
+					  FileMetaData* f = v->sentinel_files_[current_level][i]; // 取出哨兵文件
+					  if (add_all_sentinel_files || f->file_size < avg_file_size) { // 当前文件小于平均大小，则添加到压缩中
+						  c->inputs_[which].push_back(v->sentinel_files_[current_level][i]); // 把哨兵文件加入到 inputs_ 中
+						  c->sentinel_inputs_[which].push_back(v->sentinel_files_[current_level][i]); // 把哨兵文件加入到 sentinel_inputs_ 中
 					  } else {
-						  double ratio = f->file_size * 1.0 / (1.0 * avg_file_size);
-						  if (ratio <= 1.5 || max_files_per_guard == 1) {
-							  c->inputs_[which].push_back(v->sentinel_files_[current_level][i]);
-							  c->sentinel_inputs_[which].push_back(v->sentinel_files_[current_level][i]);
+						  double ratio = f->file_size * 1.0 / (1.0 * avg_file_size); // 计算当前文件相比于平均值的比例
+						  if (ratio <= 1.5 || max_files_per_guard == 1) { // 小于平均大小的 1.5 倍，或者最大文件数为 1，则添加到压缩中
+							  c->inputs_[which].push_back(v->sentinel_files_[current_level][i]); // 把哨兵文件加入到 inputs_ 中
 						  }
+							  c->sentinel_inputs_[which].push_back(v->sentinel_files_[current_level][i]); // 把哨兵文件加入到 sentinel_inputs_ 中
 					  }
 				  }
-			  } else {
-				  for (unsigned i = 0; i < v->sentinel_files_[current_level].size(); i++) {
-					  c->inputs_[which].push_back(v->sentinel_files_[current_level][i]);
-					  c->sentinel_inputs_[which].push_back(v->sentinel_files_[current_level][i]);
+			  } else { // 如果是垂直压缩，则添加 level 所有的哨兵文件
+				  for (unsigned i = 0; i < v->sentinel_files_[current_level].size(); i++) { // 遍历所有哨兵文件
+					  c->inputs_[which].push_back(v->sentinel_files_[current_level][i]); // 把哨兵文件加入到 inputs_ 中
+					  c->sentinel_inputs_[which].push_back(v->sentinel_files_[current_level][i]); // 把哨兵文件加入到 sentinel_inputs_ 中
 				  }
 			  }
 		  }
 
+      // 添加守卫文件，如果压缩分数是 >= 1.0(which=0) 或如果在守卫中的任何文件不适合守卫范围
+      // 注意:仅对于level，它根据压缩分数和文件是否适合守卫进行选择 
+      // 对于 level + 1, 它只根据文件是否适合守卫来选择文件。这是一个值得商榷的选择
 		  // Add guard files either if compaction score is >= 1.0 (for which=0) or if any file in the guard doesn't fit the guard range
 		  // Note: Only for level, it chooses based on both compaction score and whether or not files are fitting within the guards
 		  // For level + 1, it chooses files only based on whether or not files are fitting within the guards. This is a choice made
 		  // and is debatable.
 		  int guard_index_iter = 0;
-		  for (size_t i = 0; i < complete_guards.size(); i++) {
-			  GuardMetaData* cg = complete_guards[i];
+		  for (size_t i = 0; i < complete_guards.size(); i++) { // 遍历第一个 level 输入的守卫
+			  GuardMetaData* cg = complete_guards[i];  // 读取单个守卫
 			  int guard_index = -1;
-			  Slice guard_key = cg->guard_key.user_key(), next_guard_key;
-			  if (i + 1 < complete_guards.size()) {
+			  Slice guard_key = cg->guard_key.user_key(), next_guard_key; // 读取守卫的 key
+			  if (i + 1 < complete_guards.size()) { // 如果还有别的守卫，则读取下一个守卫的 key
 				  next_guard_key = complete_guards[i+1]->guard_key.user_key();
-			  }
+			  } // 记录两个相邻守卫的 key
 
+        // 假设两个守卫和 complete_guards 都是排序的!
 			  // Assuming that both guards and complete_guards are sorted !
 			  for (; guard_index_iter < guards.size(); guard_index_iter++) {
+          // 比较 complete_guards_copy 守卫的 key 和已经存储了的守卫的 key
 				  int compare = icmp_.user_comparator()->Compare(guards[guard_index_iter]->guard_key.user_key(), guard_key);
-				  if (compare == 0) {
+				  if (compare == 0) { // 如果守卫的 key 和 complete_guards_copy 守卫的 key 相等，则记录守卫的索引
 					  guard_index = guard_index_iter;
-					  guard_index_iter++;
-					  break;
-				  } else if (compare > 0) {
-					  break;
+					  guard_index_iter++; // 移动 guards 迭代器
+					  break; // 跳出循环
+				  } else if (compare > 0) { // 找到了第一个大于 complete_guards_copy 守卫的 guard_index_iter
+					  break; // 跳出循环
 				  } else {
 					  // Ideally it should never reach here since there are no duplicates in complete_guards and complete_guards is a superset of guards
 				  }
@@ -3292,37 +3352,43 @@ Compaction* VersionSet::PickCompactionForGuards(Version* v, unsigned level, std:
 			  if (guard_index == -1) { // If guard is not found for this complete guard
 				  continue;
 			  }
-			  GuardMetaData* g = guards[guard_index];
-			  bool guard_added = false;
-			  for (unsigned j = 0; j < g->files.size(); j++) {
-				  FileMetaData* file = g->file_metas[j];
-				  Slice file_smallest = file->smallest.user_key();
-				  Slice file_largest = file->largest.user_key();
-				  if ((i < complete_guards.size()-1 							// If it is not the last guard, checking for smallest and largest to fit in the range
-								  && (icmp_.user_comparator()->Compare(file_smallest, guard_key) < 0
-										  || icmp_.user_comparator()->Compare(file_largest, next_guard_key) >= 0))
+
+        // 此时找到了第一个大于 complete_guards_copy 守卫的 guard_index_iter
+			  GuardMetaData* g = guards[guard_index]; // 取出当前守卫
+			  bool guard_added = false; // 判断是否要新建守卫
+			  for (unsigned j = 0; j < g->files.size(); j++) { // 遍历当前守卫的文件
+				  FileMetaData* file = g->file_metas[j]; // 取出当前文件
+				  Slice file_smallest = file->smallest.user_key(); // 取出当前文件的最小 key
+				  Slice file_largest = file->largest.user_key(); // 取出当前文件的最大 key
+          // 判断是否需要新建守卫
+				  if ((i < complete_guards.size()-1 		// If it is not the last guard, checking for smallest and largest to fit in the range
+								  && (icmp_.user_comparator()->Compare(file_smallest, guard_key) < 0 // 如果不是最后一个守卫，就比较最小 key 和守卫的 key
+										  || icmp_.user_comparator()->Compare(file_largest, next_guard_key) >= 0)) // 如果不是最后一个守卫，就比较最大 key 和下一个守卫的 key
 						  || (i == complete_guards.size()-1 						// If it is the last guard, checking for the smallest to fit in the guard
-								  && icmp_.user_comparator()->Compare(file_smallest, guard_key) < 0)) {
-					  guards_to_add_to_compaction.push_back(g);
-					  guards_compaction_add_all_files.push_back(true);
-					  guard_added = true;
+								  && icmp_.user_comparator()->Compare(file_smallest, guard_key) < 0)) {  // 如果是最后一个守卫，就比较最小 key 和守卫的 key
+					  guards_to_add_to_compaction.push_back(g); // 将当前守卫添加到要压缩的守卫列表中
+					  guards_compaction_add_all_files.push_back(true); // 将当前守卫的所有文件都添加到要压缩的守卫列表中
+					  guard_added = true; // 设置守卫已经添加
 					  break; // No need to check other files
 				  }
 			  }
+
+        // 不需要新建守卫，但是如果是上面的层次，且 guard_compaction_scores_ >= 1，则需要新建守卫
 			  if (!guard_added && which == 0 && (force_compact || v->guard_compaction_scores_[current_level][guard_index] >= 1.0)) {
-				  guards_to_add_to_compaction.push_back(g);
-				  guards_compaction_add_all_files.push_back(false);
+				  guards_to_add_to_compaction.push_back(g); // 将当前守卫添加到要压缩的守卫列表中
+				  guards_compaction_add_all_files.push_back(false); // 只添加当前守卫的一部分文件
 				  continue;
 			  }
 		  }
 
 		  // Adding files to c->inputs_
 		  for (int i = 0; i < guards_to_add_to_compaction.size(); i++) {
-			  if (horizontal_compaction) {
+			  if (horizontal_compaction) { // 如果是水平合并
 				  GuardMetaData* g = guards_to_add_to_compaction[i];
 				  uint64_t total_bytes = TotalFileSize(g->file_metas);
 				  uint64_t avg_file_size = total_bytes / static_cast<double> (config::kMaxFilesPerGuardSentinel);
 
+          // 生成新的守卫
 				  // WATCH OUT. You are creating a new object, make sure to delete it after processing.
 				  GuardMetaData* new_g = new GuardMetaData;
 				  new_g->guard_key = g->guard_key;
@@ -3331,39 +3397,39 @@ Compaction* VersionSet::PickCompactionForGuards(Version* v, unsigned level, std:
 				  new_g->largest = g->largest;
 				  new_g->number_segments = 0;
 
-				  for (int j = 0; j < g->number_segments; j++) {
-					  FileMetaData* f = g->file_metas[j];
-					  if (guards_compaction_add_all_files[i] || f->file_size < avg_file_size) {
-						  // Add this file to the set of inputs
-						  c->inputs_[which].push_back(g->file_metas[j]);
+				  for (int j = 0; j < g->number_segments; j++) { // 遍历当前守卫的所有分片
+					  FileMetaData* f = g->file_metas[j]; // 取出当前分片
+					  if (guards_compaction_add_all_files[i] || f->file_size < avg_file_size) { // 如果要添加所有文件或者当前分片的文件小于平均文件大小
+						  // Add this file to the set of inputs 
+						  c->inputs_[which].push_back(g->file_metas[j]); // 将当前分片添加到要压缩的守卫列表中
 
 						  // Add this file to the guard
-						  new_g->file_metas.push_back(f);
-						  new_g->files.push_back(f->number);
-						  new_g->number_segments++;
+						  new_g->file_metas.push_back(f); // 将当前分片添加到新的守卫中
+						  new_g->files.push_back(f->number); // 将当前分片的文件号添加到新的守卫中
+						  new_g->number_segments++; // 将当前守卫的分片数量加 1
 					  } else {
-						  double ratio = f->file_size * 1.0 / (1.0 * avg_file_size);
-						  if (ratio <= 1.5 || max_files_per_guard == 1) {
+						  double ratio = f->file_size * 1.0 / (1.0 * avg_file_size); // 当前分片的文件大小与平均文件大小的比值
+						  if (ratio <= 1.5 || max_files_per_guard == 1) { // 如果当前分片的文件大小与平均文件大小的比值小于等于 1.5 或者最大文件数量为 1
 							  // Add this file to the set of inputs
-							  c->inputs_[which].push_back(g->file_metas[j]);
+							  c->inputs_[which].push_back(g->file_metas[j]); // 将当前分片添加到要压缩的守卫列表中
 
 							  // Add this file to the guard
-							  new_g->file_metas.push_back(f);
-							  new_g->files.push_back(f->number);
-							  new_g->number_segments++;
+							  new_g->file_metas.push_back(f); // 将当前分片添加到新的守卫中
+							  new_g->files.push_back(f->number); // 将当前分片的文件号添加到新的守卫中
+							  new_g->number_segments++; // 将当前守卫的分片数量加 1
 						  }
 					  }
 				  }
-				  c->guard_inputs_[which].push_back(new_g);
-			  } else {
-				  GuardMetaData* g = guards_to_add_to_compaction[i];
-				  for (int j = 0; j < g->number_segments; j++) {
-					  c->inputs_[which].push_back(g->file_metas[j]);
+				  c->guard_inputs_[which].push_back(new_g); // 将新的守卫添加到要压缩的守卫列表中
+			  } else { // 如果是垂直合并
+				  GuardMetaData* g = guards_to_add_to_compaction[i]; // 取出当前守卫
+				  for (int j = 0; j < g->number_segments; j++) { // 遍历当前守卫的所有分片
+					  c->inputs_[which].push_back(g->file_metas[j]); // Add this file to the set of inputs
 				  }
-				  c->guard_inputs_[which].push_back(g);
+				  c->guard_inputs_[which].push_back(g); // 将当前守卫添加到要压缩的守卫列表中
 			  }
 		  }
-		  guards_to_add_to_compaction.clear();
+		  guards_to_add_to_compaction.clear(); // 清空要添加到压缩的守卫列表
 	  }
 	  return c;
 }
@@ -3510,8 +3576,8 @@ Compaction* VersionSet::CompactRange(
   std::vector<FileMetaData*> sentinel_inputs[2];
   std::vector<GuardMetaData*> guard_inputs[2];
 
-  current_->GetOverlappingInputsGuards(level, begin, end, &inputs[0], &guard_inputs[0], &sentinel_inputs[0]);
-  current_->GetOverlappingInputsGuards(level + 1, begin, end, &inputs[1], &guard_inputs[1], &sentinel_inputs[1]);
+  current_->GetOverlappingInputsGuards(level, begin, end, &inputs[0], &guard_inputs[0], &sentinel_inputs[0]); // 获取当前 level 重叠的守卫信息
+  current_->GetOverlappingInputsGuards(level + 1, begin, end, &inputs[1], &guard_inputs[1], &sentinel_inputs[1]); // 下一个 level 的守卫信息
   if (inputs[0].empty()) {
     return NULL;
   }
@@ -3534,7 +3600,7 @@ Compaction* VersionSet::CompactRange(
     }
   }*/
 
-  Compaction* c = new Compaction(level);
+  Compaction* c = new Compaction(level); // 构造对应的 compaction 对象
   c->input_version_ = current_;
   c->input_version_->Ref();
   c->inputs_[0] = inputs[0];
