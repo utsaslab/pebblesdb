@@ -1,0 +1,64 @@
+name: ci
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name:  >-
+      CI
+      ${{ matrix.os }}
+      ${{ matrix.compiler }}
+      ${{ matrix.optimized && 'release' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [clang]
+        os: [ubuntu-latest, macos-latest]
+        optimized: [true]
+        include:
+        - compiler: clang
+          CC: clang
+          CXX: clang++
+
+    env:
+      CMAKE_BUILD_DIR: ${{ github.workspace }}/build
+      CMAKE_BUILD_TYPE: ${{ matrix.optimized && 'RelWithDebInfo'}}
+      CC: ${{ matrix.CC }}
+      CXX: ${{ matrix.CXX }}
+      BINARY_SUFFIX: ${{ startsWith(matrix.os, 'windows') && '.exe' || '' }}
+      BINARY_PATH: >-
+        ${{ format(
+        startsWith(matrix.os, 'windows') && '{0}\build\{1}\' || '{0}/build/',
+        github.workspace,
+        matrix.optimized && 'RelWithDebInfo' || 'Debug') }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install dependencies on Linux
+      if: ${{ runner.os == 'Linux' }}
+      # libgoogle-perftools-dev is temporarily removed from the package list
+      # because it is currently broken on GitHub's Ubuntu 22.04.
+      run: |
+        sudo apt-get update
+        sudo apt-get install libkyotocabinet-dev libsnappy-dev libsqlite3-dev
+
+    - name: Generate build config
+      run: >-
+        cmake -S "${{ github.workspace }}" -B "${{ env.CMAKE_BUILD_DIR }}"
+        -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+        -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/install_test/
+
+    - name: Build
+      run: >-
+        cmake --build "${{ env.CMAKE_BUILD_DIR }}"
+        --config "${{ env.CMAKE_BUILD_TYPE }}"
+
+    - name: Run Tests
+      working-directory: ${{ github.workspace }}/build
+      run: ./db_test
